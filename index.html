@@ -899,11 +899,8 @@ async function ensureColumns(){
 function generatePackage(){
   if(!currentProject){toast('No project selected','error');return}
   const p=currentProject;
-  const transcript=(p.transcript||[]).map(m=>`[${m.role==='user'?'CUSTOMER':'AI'}]: ${m.content}`).join('
-
-');
-  const deliverables=(p.deliverables||[]).map(d=>`- ${d}`).join('
-');
+  const transcript=(p.transcript||[]).map(m=>'['+( m.role==='user'?'CUSTOMER':'AI')+']: '+m.content).join('\n\n');
+  const deliverables=(p.deliverables||[]).map(d=>'- '+d).join('\n');
 
   const brief=`# AIAI Build Package
 Generated: ${new Date().toLocaleString()}
