@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AIAI Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#ffffff;--surface2:#f0efe9;--border:#e2e0d8;--border2:#d0cec4;
+  --text:#1a1a18;--muted:#7a7870;--accent:#e8a628;--accent2:#f0c060;--accent-dim:#fdf3e0;
+  --red:#dc2626;--red-dim:#fef2f2;--green:#16a34a;--green-dim:#f0fdf4;
+  --blue:#2563eb;--blue-dim:#eff6ff;--purple:#7c3aed;--purple-dim:#f5f3ff;
+  --amber:#d97706;--amber-dim:#fffbeb;
+  --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
+  --radius:10px;--sidebar:240px;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;flex-direction:column}
+
+/* ── LOGIN ── */
+#login-screen{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;background:var(--bg);
+  background-image:radial-gradient(circle at 20% 50%, rgba(232,166,40,.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(232,166,40,.05) 0%, transparent 40%);
+}
+.login-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:48px;width:100%;max-width:400px;
+  box-shadow:0 4px 24px rgba(0,0,0,.06);
+}
+.login-logo{font-size:28px;font-weight:800;margin-bottom:8px}
+.login-logo span{color:var(--accent)}
+.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.05em;margin-bottom:6px}
+.field input{width:100%;padding:12px 16px;border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:15px;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s}
+.field input:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0a0a0a;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px}
+.login-btn:hover{opacity:.88;transform:translateY(-1px)}
+.login-error{font-size:13px;color:var(--red);margin-top:12px;text-align:center;display:none}
+
+/* ── APP SHELL ── */
+#app-shell{display:none;height:100vh;flex-direction:row}
+#app-shell.active{display:flex}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  background:var(--text);color:#f0ece4;
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+}
+.sidebar-logo{padding:24px 20px 20px;font-size:20px;font-weight:800;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo span{color:var(--accent)}
+.sidebar-logo small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,.4);font-family:var(--mono);margin-top:2px}
+.nav-section{padding:16px 12px 8px;font-size:10px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:.12em;font-family:var(--mono);text-transform:uppercase}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
+  margin:1px 8px;cursor:pointer;font-size:14px;font-weight:500;
+  color:rgba(255,255,255,.6);transition:background .15s,color .15s;
+  border:none;background:none;width:calc(100% - 16px);text-align:left;
+}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9)}
+.nav-item.active{background:rgba(232,166,40,.15);color:var(--accent)}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--accent);color:#0a0a0a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;font-family:var(--mono)}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid rgba(255,255,255,.08)}
+.user-chip{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.5)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.logout-btn{margin-left:auto;font-size:11px;color:rgba(255,255,255,.3);cursor:pointer;background:none;border:none;font-family:var(--font)}
+.logout-btn:hover{color:rgba(255,255,255,.6)}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{
+  padding:16px 28px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);flex-shrink:0;position:sticky;top:0;z-index:10;
+}
+.topbar-title{font-size:18px;font-weight:700}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.content{padding:24px 28px;flex:1}
+
+/* ── BUTTONS ── */
+.btn{font-family:var(--font);font-size:13px;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--border2);background:var(--surface2)}
+.btn-primary{background:var(--accent);color:#0a0a0a;border-color:var(--accent)}
+.btn-primary:hover{opacity:.88;background:var(--accent)}
+.btn-danger{background:var(--red-dim);color:var(--red);border-color:#fca5a5}
+.btn-danger:hover{background:#fee2e2}
+.btn-sm{font-size:12px;padding:5px 12px}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.stat-label{font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:6px}
+.stat-val{font-size:28px;font-weight:800;letter-spacing:-1px}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.stat-val.green{color:var(--green)}
+.stat-val.amber{color:var(--amber)}
+.stat-val.blue{color:var(--blue)}
+.stat-val.accent{color:var(--accent)}
+
+/* ── TABLE ── */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-header h3{font-size:15px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface2)}
+td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--surface2)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;font-family:var(--mono)}
+.badge-new{background:#eff6ff;color:#2563eb}
+.badge-reviewing{background:var(--amber-dim);color:var(--amber)}
+.badge-building{background:var(--purple-dim);color:var(--purple)}
+.badge-demo_sent{background:#f0fdf4;color:#15803d}
+.badge-approved{background:#dcfce7;color:#166534}
+.badge-live{background:#bbf7d0;color:#14532d}
+.badge-cancelled{background:#f1f5f9;color:#64748b}
+
+/* ── DETAIL PANEL ── */
+.detail-panel{
+  position:fixed;top:0;right:0;bottom:0;width:640px;
+  background:var(--surface);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100;
+  transform:translateX(100%);transition:transform .3s ease;
+  box-shadow:-4px 0 24px rgba(0,0,0,.08);
+}
+.detail-panel.open{transform:translateX(0)}
+.panel-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.panel-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.panel-ref{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.panel-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);padding:4px;line-height:1}
+.panel-close:hover{color:var(--text)}
+.panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 24px}
+.panel-tab{font-size:13px;font-weight:600;padding:12px 16px;border-bottom:2px solid transparent;cursor:pointer;color:var(--muted);background:none;border-left:none;border-right:none;border-top:none;font-family:var(--font);margin-bottom:-1px}
+.panel-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.panel-body{flex:1;overflow-y:auto;padding:24px}
+.panel-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0}
+
+/* ── DETAIL SECTIONS ── */
+.detail-section{margin-bottom:28px}
+.detail-section h4{font-size:12px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-item{background:var(--surface2);border-radius:8px;padding:12px 14px}
+.info-item .lbl{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px}
+.info-item .val{font-size:14px;font-weight:600;word-break:break-all}
+.info-item.full{grid-column:1/-1}
+
+/* ── TRANSCRIPT ── */
+.transcript{display:flex;flex-direction:column;gap:10px}
+.t-msg{display:flex;gap:8px;align-items:flex-start}
+.t-msg.customer{flex-direction:row-reverse}
+.t-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.t-avatar.ai{background:var(--accent-dim);color:var(--amber);border:1px solid rgba(232,166,40,.3)}
+.t-avatar.customer{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.t-bubble{max-width:80%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5}
+.t-msg.ai .t-bubble{background:var(--surface2);border:1px solid var(--border);border-radius:3px 12px 12px 12px}
+.t-msg.customer .t-bubble{background:var(--accent-dim);border:1px solid rgba(232,166,40,.2);border-radius:12px 3px 12px 12px}
+
+/* ── STATUS SELECT ── */
+.status-select{font-family:var(--font);font-size:13px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;outline:none}
+
+/* ── DEMO LINK ── */
+.demo-input-row{display:flex;gap:8px;margin-bottom:12px}
+.demo-input{flex:1;padding:10px 14px;border:1px solid var(--border2);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--text);background:var(--surface2);outline:none}
+.demo-input:focus{border-color:var(--accent)}
+
+/* ── NOTES ── */
+.notes-area{width:100%;min-height:100px;padding:12px 14px;border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface2);outline:none;resize:vertical;line-height:1.6}
+.notes-area:focus{border-color:var(--accent)}
+
+/* ── VERSION LIST ── */
+.version-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.version-num{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
+.version-info{font-size:13px;color:var(--muted)}
+
+/* ── DRIP CAMPAIGN ── */
+.drip-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.drip-item:last-child{border-bottom:none}
+.drip-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.drip-status.sent{background:var(--green)}
+.drip-status.pending{background:var(--border2)}
+.drip-status.scheduled{background:var(--amber)}
+.drip-info{flex:1}
+.drip-name{font-size:13px;font-weight:600}
+.drip-date{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+
+/* ── CUSTOMERS PAGE ── */
+.customer-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:border-color .15s}
+.customer-card:hover{border-color:var(--border2)}
+.customer-initials{width:44px;height:44px;border-radius:50%;background:var(--accent-dim);color:var(--amber);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.customer-info{flex:1}
+.customer-name{font-size:15px;font-weight:700}
+.customer-meta{font-size:12px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.customer-stats{display:flex;gap:16px;text-align:right}
+.cstat{font-size:12px;color:var(--muted)}
+.cstat strong{display:block;font-size:16px;font-weight:700;color:var(--text)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty h3{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
+.empty p{font-size:14px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#f0ece4;padding:12px 20px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+/* ── OVERLAY ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99;display:none}
+.overlay.show{display:block}
+
+/* ── SEARCH ── */
+.search-input{padding:8px 14px;border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface2);outline:none;width:220px}
+.search-input:focus{border-color:var(--accent)}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.kpi-label{font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:8px}
+.kpi-val{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.kpi-bar{height:4px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden}
+.kpi-bar-fill{height:100%;background:var(--accent);border-radius:2px}
+
+@media(max-width:900px){
+  .sidebar{width:60px}
+  .nav-item span,.sidebar-logo small,.nav-section,.user-chip .email,.logout-btn{display:none}
+  .sidebar-logo{padding:16px;text-align:center}
+  .detail-panel{width:100%}
+  .stats-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">AI<span>AI</span></div>
+    <div class="login-sub">Employee dashboard — sign in to continue</div>
+    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@aiai.app" autocomplete="email"/></div>
+    <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">AI<span>AI</span><small>Admin Dashboard</small></div>
+    <div class="nav-section">Main</div>
+    <button class="nav-item active" onclick="showPage('queue',this)"><span class="icon">📥</span><span>Queue</span><span class="nav-badge" id="new-badge">0</span></button>
+    <button class="nav-item" onclick="showPage('customers',this)"><span class="icon">👥</span><span>Customers</span></button>
+    <button class="nav-item" onclick="showPage('versions',this)"><span class="icon">🔖</span><span>Versions</span></button>
+    <button class="nav-item" onclick="showPage('campaigns',this)"><span class="icon">📨</span><span>Campaigns</span></button>
+    <div class="nav-section">Insights</div>
+    <button class="nav-item" onclick="showPage('kpis',this)"><span class="icon">📊</span><span>KPIs</span></button>
+    <div class="nav-section">Settings</div>
+    <button class="nav-item" onclick="showPage('team',this)"><span class="icon">🔑</span><span>Team</span></button>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">--</div>
+        <span class="email" id="user-email" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button class="logout-btn" onclick="doLogout()">Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main">
+
+    <!-- QUEUE PAGE -->
+    <div id="page-queue">
+      <div class="topbar">
+        <div class="topbar-title">Project Queue</div>
+        <div class="topbar-actions">
+          <input class="search-input" placeholder="Search projects…" oninput="filterQueue(this.value)"/>
+          <button class="btn btn-sm" onclick="loadQueue()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stats-row" id="queue-stats"></div>
+        <div class="table-card">
+          <div class="table-header"><h3>All Projects</h3></div>
+          <table>
+            <thead><tr>
+              <th>Customer</th><th>Project</th><th>Quote</th><th>Status</th><th>Received</th><th>Demo Views</th>
+            </tr></thead>
+            <tbody id="queue-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS PAGE -->
+    <div id="page-customers" style="display:none">
+      <div class="topbar">
+        <div class="topbar-title">Customers</div>
+        <div class="topbar-actions"><input class="search-input" placeholder="Search customers…" oninput="filterCustomers(this.value)"/></div>
+      </div>
+      <div class="content" id="customers-list"></div>
+    </div>
+
+    <!-- VERSIONS PAGE -->
+    <div id="page-versions" style="display:none">
+      <div class="topbar"><div class="topbar-title">Version History</div></div>
+      <div class="content">
+        <div class="kpi-grid" id="version-kpis"></div>
+        <div class="table-card">
+          <div class="table-header"><h3>All Versions</h3></div>
+          <table>
+            <thead><tr><th>Customer</th><th>Project</th><th>Version</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="versions-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAMPAIGNS PAGE -->
+    <div id="page-campaigns" style="display:none">
+      <div class="topbar"><div class="topbar-title">Drip Campaigns</div></div>
+      <div class="content">
+        <div class="table-card">
+          <div class="table-header"><h3>Campaign Status by Customer</h3></div>
+          <table>
+            <thead><tr><th>Customer</th><th>Welcome</th><th>7-day</th><th>30-day</th><th>Survey</th><th>Actions</th></tr></thead>
+            <tbody id="campaigns-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIS PAGE -->
+    <div id="page-kpis" style="display:none">
+      <div class="topbar"><div class="topbar-title">KPIs & Analytics</div></div>
+      <div class="content" id="kpis-content"></div>
+    </div>
+
+    <!-- TEAM PAGE -->
+    <div id="page-team" style="display:none">
+      <div class="topbar">
+        <div class="topbar-title">Team</div>
+        <div class="topbar-actions"><button class="btn btn-primary btn-sm" onclick="showInvite()">+ Invite member</button></div>
+      </div>
+      <div class="content">
+        <div class="table-card">
+          <div class="table-header"><h3>Team Members</h3></div>
+          <table>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+            <tbody id="team-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- DETAIL PANEL -->
+<div class="detail-panel" id="detail-panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-title" id="panel-title">Project Name</div>
+      <div class="panel-ref" id="panel-ref">AIAI-XXXX</div>
+    </div>
+    <button class="panel-close" onclick="closePanel()">×</button>
+  </div>
+  <div class="panel-tabs">
+    <button class="panel-tab active" onclick="switchTab('overview',this)">Overview</button>
+    <button class="panel-tab" onclick="switchTab('transcript',this)">Transcript</button>
+    <button class="panel-tab" onclick="switchTab('demo',this)">Demo & Links</button>
+    <button class="panel-tab" onclick="switchTab('drip',this)">Campaign</button>
+    <button class="panel-tab" onclick="switchTab('versions',this)">Versions</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+  <div class="panel-footer">
+    <select class="status-select" id="status-select" onchange="updateStatus(this.value)">
+      <option value="new">New</option>
+      <option value="reviewing">Reviewing</option>
+      <option value="building">Building</option>
+      <option value="demo_sent">Demo Sent</option>
+      <option value="approved">Approved</option>
+      <option value="live">Live</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+    <button class="btn btn-primary" onclick="saveNotes()">Save notes</button>
+    <button class="btn" onclick="sendDemoEmail()" id="send-demo-btn">📤 Send demo</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://qunchnutxjbaxesajszm.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM';
+const CLOUDFLARE_WORKER='https://aiai-proxy.aiai-admin.workers.dev/';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentProject=null;
+let allProjects=[];
+let currentTab='overview';
+
+// ── AUTH ──
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  err.style.display='none';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){err.textContent=error.message;err.style.display='block';return}
+  initApp(data.user);
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  document.getElementById('app-shell').classList.remove('active');
+  document.getElementById('login-screen').style.display='flex';
+}
+
+async function checkAuth(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session){initApp(session.user)}
+}
+
+function initApp(user){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').classList.add('active');
+  const initials=user.email.substring(0,2).toUpperCase();
+  document.getElementById('user-avatar').textContent=initials;
+  document.getElementById('user-email').textContent=user.email;
+  loadQueue();
+  loadTeam();
+}
+
+// ── NAVIGATION ──
+function showPage(page,btn){
+  document.querySelectorAll('[id^="page-"]').forEach(p=>p.style.display='none');
+  document.getElementById('page-'+page).style.display='block';
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(page==='queue')loadQueue();
+  if(page==='customers')loadCustomers();
+  if(page==='versions')loadVersions();
+  if(page==='campaigns')loadCampaigns();
+  if(page==='kpis')loadKPIs();
+  if(page==='team')loadTeam();
+}
+
+// ── TOAST ──
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',3000);
+}
+
+// ── FORMAT ──
+function fmt$$(n){return '$'+(n||0).toLocaleString()}
+function fmtDate(d){return d?new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}
+function badgeHtml(status){return `<span class="badge badge-${status}">${status.replace('_',' ')}</span>`}
+function initials(name){return name?name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'??'}
+
+// ── QUEUE ──
+async function loadQueue(){
+  const{data,error}=await sb.from('projects').select('*').order('created_at',{ascending:false});
+  if(error){toast('Error loading projects','error');return}
+  allProjects=data||[];
+  renderQueue(allProjects);
+  renderQueueStats(allProjects);
+  document.getElementById('new-badge').textContent=allProjects.filter(p=>p.status==='new').length;
+}
+
+function renderQueueStats(projects){
+  const total=projects.length;
+  const newCount=projects.filter(p=>p.status==='new').length;
+  const revenue=projects.filter(p=>['approved','live'].includes(p.status)).reduce((s,p)=>s+(p.monthly_fee||0),0);
+  const pipeline=projects.filter(p=>!['cancelled','live'].includes(p.status)).reduce((s,p)=>s+(p.setup_fee||0),0);
+  document.getElementById('queue-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total projects</div><div class="stat-val blue">${total}</div><div class="stat-sub">All time</div></div>
+    <div class="stat-card"><div class="stat-label">New requests</div><div class="stat-val amber">${newCount}</div><div class="stat-sub">Needs attention</div></div>
+    <div class="stat-card"><div class="stat-label">Monthly recurring</div><div class="stat-val green">${fmt$$(revenue)}</div><div class="stat-sub">Active subscriptions</div></div>
+    <div class="stat-card"><div class="stat-label">Pipeline value</div><div class="stat-val accent">${fmt$$(pipeline)}</div><div class="stat-sub">Setup fees pending</div></div>`;
+}
+
+function renderQueue(projects){
+  const tbody=document.getElementById('queue-tbody');
+  if(!projects.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">No projects yet</td></tr>';return}
+  tbody.innerHTML=projects.map(p=>`
+    <tr class="clickable" onclick="openProject('${p.id}')">
+      <td><strong>${p.customer_name||'—'}</strong><br/><span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${p.customer_email||''}</span></td>
+      <td>${p.project_name||'—'}</td>
+      <td><strong>${fmt$$(p.setup_fee)}</strong><br/><span style="font-size:11px;color:var(--muted)">${fmt$$(p.monthly_fee)}/mo</span></td>
+      <td>${badgeHtml(p.status||'new')}</td>
+      <td style="font-family:var(--mono);font-size:12px">${fmtDate(p.created_at)}</td>
+      <td style="font-family:var(--mono);font-size:13px;text-align:center">${p.demo_views||0}</td>
+    </tr>`).join('');
+}
+
+function filterQueue(q){
+  const filtered=allProjects.filter(p=>
+    (p.customer_name||'').toLowerCase().includes(q.toLowerCase())||
+    (p.project_name||'').toLowerCase().includes(q.toLowerCase())||
+    (p.customer_email||'').toLowerCase().includes(q.toLowerCase())
+  );
+  renderQueue(filtered);
+}
+
+// ── PROJECT DETAIL ──
+async function openProject(id){
+  const p=allProjects.find(x=>x.id===id);
+  if(!p)return;
+  currentProject=p;
+  document.getElementById('panel-title').textContent=p.project_name||'Untitled Project';
+  document.getElementById('panel-ref').textContent=(p.ref_code||'')+'  ·  '+p.customer_name;
+  document.getElementById('status-select').value=p.status||'new';
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+  switchTab('overview',null);
+}
+
+function closePanel(){
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  currentProject=null;
+}
+
+function switchTab(tab,btn){
+  currentTab=tab;
+  document.querySelectorAll('.panel-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  else document.querySelectorAll('.panel-tab')[['overview','transcript','demo','drip','versions'].indexOf(tab)]?.classList.add('active');
+  renderTab(tab);
+}
+
+function renderTab(tab){
+  const p=currentProject;
+  if(!p)return;
+  const body=document.getElementById('panel-body');
+
+  if(tab==='overview'){
+    body.innerHTML=`
+      <div class="detail-section">
+        <h4>Customer info</h4>
+        <div class="info-grid">
+          <div class="info-item"><div class="lbl">Name</div><div class="val">${p.customer_name||'—'}</div></div>
+          <div class="info-item"><div class="lbl">Email</div><div class="val">${p.customer_email||'—'}</div></div>
+          <div class="info-item"><div class="lbl">Phone</div><div class="val">${p.customer_phone||'—'}</div></div>
+          <div class="info-item"><div class="lbl">Ref code</div><div class="val" style="font-family:var(--mono)">${p.ref_code||'—'}</div></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Project summary</h4>
+        <div class="info-grid">
+          <div class="info-item full"><div class="lbl">Summary</div><div class="val" style="font-weight:400;line-height:1.5">${p.summary||'—'}</div></div>
+          <div class="info-item"><div class="lbl">Setup fee</div><div class="val" style="color:var(--amber)">${fmt$$(p.setup_fee)}</div></div>
+          <div class="info-item"><div class="lbl">Monthly fee</div><div class="val">${fmt$$(p.monthly_fee)}/mo</div></div>
+          <div class="info-item"><div class="lbl">Complexity</div><div class="val">${p.complexity||'—'}</div></div>
+          <div class="info-item"><div class="lbl">Timeline</div><div class="val">${p.timeline||'—'}</div></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Deliverables</h4>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${(p.deliverables||[]).map(d=>`<div style="display:flex;gap:8px;font-size:13px"><span style="color:var(--green)">✓</span>${d}</div>`).join('')}
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Internal notes</h4>
+        <textarea class="notes-area" id="notes-area" placeholder="Add notes visible only to your team…">${p.internal_notes||''}</textarea>
+      </div>`;
+  }
+
+  if(tab==='transcript'){
+    const msgs=p.transcript||[];
+    body.innerHTML=`<div class="transcript">${msgs.map(m=>`
+      <div class="t-msg ${m.role==='user'?'customer':'ai'}">
+        <div class="t-avatar ${m.role==='user'?'customer':'ai'}">${m.role==='user'?initials(p.customer_name):'AI'}</div>
+        <div class="t-bubble">${(m.content||'').replace(/\n/g,'<br/>')}</div>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  if(tab==='demo'){
+    body.innerHTML=`
+      <div class="detail-section">
+        <h4>Demo link</h4>
+        <div class="demo-input-row">
+          <input class="demo-input" id="demo-url-input" placeholder="https://demos.aiai.app/xyz" value="${p.demo_url||''}"/>
+          <button class="btn btn-primary btn-sm" onclick="saveDemoUrl()">Save</button>
+        </div>
+        ${p.demo_url?`<div style="font-size:13px;color:var(--muted)">Current: <a href="${p.demo_url}" target="_blank" style="color:var(--blue)">${p.demo_url}</a></div>`:''}
+      </div>
+      <div class="detail-section">
+        <h4>Demo stats</h4>
+        <div class="info-grid">
+          <div class="info-item"><div class="lbl">Times viewed</div><div class="val" style="color:var(--blue)">${p.demo_views||0}</div></div>
+          <div class="info-item"><div class="lbl">Last viewed</div><div class="val">${fmtDate(p.demo_last_viewed)}</div></div>
+          <div class="info-item"><div class="lbl">Approved</div><div class="val">${p.demo_approved?'✅ Yes':'Pending'}</div></div>
+          <div class="info-item"><div class="lbl">Live URL</div><div class="val" style="font-family:var(--mono);font-size:12px">${p.live_url||'Not set'}</div></div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Send demo email</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Send the demo link to <strong>${p.customer_email}</strong> with a review request.</p>
+        <button class="btn btn-primary" onclick="sendDemoEmail()">📤 Send demo link to customer</button>
+      </div>
+      <div class="detail-section">
+        <h4>Subscription</h4>
+        <div class="info-grid">
+          <div class="info-item"><div class="lbl">Status</div><div class="val">${badgeHtml(p.subscription_status||'pending')}</div></div>
+          <div class="info-item"><div class="lbl">Monthly fee</div><div class="val">${fmt$$(p.monthly_fee)}/mo</div></div>
+        </div>
+        ${p.status==='live'?`<button class="btn btn-danger btn-sm" style="margin-top:12px" onclick="cancelSubscription()">Cancel subscription</button>`:''}
+      </div>`;
+  }
+
+  if(tab==='drip'){
+    const campaigns=[
+      {name:'Welcome email',key:'drip_welcome',desc:'Sent immediately after approval'},
+      {name:'7-day check-in',key:'drip_7day',desc:'How are things going?'},
+      {name:'30-day survey',key:'drip_30day',desc:'Satisfaction survey'},
+      {name:'Feature ideas',key:'drip_features',desc:'Suggestions for v2'},
+    ];
+    body.innerHTML=`
+      <div class="detail-section">
+        <h4>Drip campaign status</h4>
+        <div>${campaigns.map(c=>`
+          <div class="drip-item">
+            <div class="drip-status ${p[c.key]?'sent':'pending'}"></div>
+            <div class="drip-info">
+              <div class="drip-name">${c.name}</div>
+              <div class="drip-date">${c.desc}${p[c.key]?' · Sent '+fmtDate(p[c.key]):' · Not sent yet'}</div>
+            </div>
+            ${!p[c.key]?`<button class="btn btn-sm" onclick="sendDrip('${c.key}','${c.name}')">Send now</button>`:'<span style="font-size:12px;color:var(--green)">✓ Sent</span>'}
+          </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  if(tab==='versions'){
+    body.innerHTML=`
+      <div class="detail-section">
+        <h4>Version history</h4>
+        <div class="version-item">
+          <div>
+            <div class="version-num">v1 — Initial build</div>
+            <div class="version-info">${fmtDate(p.created_at)} · ${fmt$$(p.setup_fee)} · ${p.complexity} complexity</div>
+          </div>
+          ${badgeHtml(p.status||'new')}
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-primary btn-sm" onclick="toast('Feature request flow coming soon — will link to new consultation','')">+ Add feature / new version</button>
+        </div>
+      </div>`;
+  }
+}
+
+// ── ACTIONS ──
+async function updateStatus(status){
+  if(!currentProject)return;
+  const{error}=await sb.from('projects').update({status}).eq('id',currentProject.id);
+  if(error){toast('Error updating status','error');return}
+  currentProject.status=status;
+  allProjects=allProjects.map(p=>p.id===currentProject.id?{...p,status}:p);
+  renderQueue(allProjects);
+  renderQueueStats(allProjects);
+  document.getElementById('new-badge').textContent=allProjects.filter(p=>p.status==='new').length;
+  toast('Status updated','success');
+}
+
+async function saveNotes(){
+  if(!currentProject)return;
+  const notes=document.getElementById('notes-area')?.value||'';
+  const{error}=await sb.from('projects').update({internal_notes:notes}).eq('id',currentProject.id);
+  if(error){toast('Error saving notes','error');return}
+  currentProject.internal_notes=notes;
+  toast('Notes saved','success');
+}
+
+async function saveDemoUrl(){
+  if(!currentProject)return;
+  const url=document.getElementById('demo-url-input')?.value.trim();
+  const{error}=await sb.from('projects').update({demo_url:url}).eq('id',currentProject.id);
+  if(error){toast('Error saving URL','error');return}
+  currentProject.demo_url=url;
+  toast('Demo URL saved','success');
+}
+
+async function sendDemoEmail(){
+  if(!currentProject){toast('No project selected','error');return}
+  if(!currentProject.demo_url){toast('Set a demo URL first','error');return}
+  const p=currentProject;
+  try{
+    const res=await fetch(CLOUDFLARE_WORKER,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        _action:'send_email',
+        to:p.customer_email,
+        subject:`Your AIAI app is ready for review — ${p.project_name}`,
+        html:`<h2>Your app is ready!</h2>
+<p>Hi ${p.customer_name?.split(' ')[0]||'there'},</p>
+<p>Great news — your <strong>${p.project_name}</strong> MVP is built and ready for your review.</p>
+<p><a href="${p.demo_url}" style="background:#e8a628;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:16px 0">👀 Review your app</a></p>
+<p>Take it for a spin and let us know what you think. Once you approve, we'll get it live on your URL right away.</p>
+<p>Reference: <strong>${p.ref_code}</strong></p>
+<p>— The AIAI Team</p>`
+      })
+    });
+    toast('Demo email sent to '+p.customer_email,'success');
+    await sb.from('projects').update({status:'demo_sent'}).eq('id',p.id);
+    currentProject.status='demo_sent';
+    document.getElementById('status-select').value='demo_sent';
+  }catch(e){toast('Error sending email','error');console.error(e)}
+}
+
+async function sendDrip(key,name){
+  if(!currentProject)return;
+  const p=currentProject;
+  const now=new Date().toISOString();
+  await sb.from('projects').update({[key]:now}).eq('id',p.id);
+  currentProject[key]=now;
+  toast(`${name} sent to ${p.customer_email}`,'success');
+  renderTab('drip');
+}
+
+async function cancelSubscription(){
+  if(!currentProject)return;
+  if(!confirm('Cancel this subscription? This will notify the customer.'))return;
+  await sb.from('projects').update({status:'cancelled',subscription_status:'cancelled'}).eq('id',currentProject.id);
+  currentProject.status='cancelled';
+  document.getElementById('status-select').value='cancelled';
+  toast('Subscription cancelled','success');
+  renderTab('demo');
+}
+
+// ── CUSTOMERS ──
+async function loadCustomers(){
+  const{data}=await sb.from('projects').select('*').order('created_at',{ascending:false});
+  const projects=data||[];
+  // Group by email
+  const map={};
+  projects.forEach(p=>{
+    const key=p.customer_email||p.id;
+    if(!map[key])map[key]={...p,projectCount:0,totalValue:0};
+    map[key].projectCount++;
+    map[key].totalValue+=(p.setup_fee||0);
+  });
+  const customers=Object.values(map);
+  const container=document.getElementById('customers-list');
+  if(!customers.length){container.innerHTML='<div class="empty"><div class="empty-icon">👥</div><h3>No customers yet</h3><p>Customers will appear here when they submit projects.</p></div>';return}
+  container.innerHTML=customers.map(c=>`
+    <div class="customer-card" onclick="openProject('${c.id}')">
+      <div class="customer-initials">${initials(c.customer_name)}</div>
+      <div class="customer-info">
+        <div class="customer-name">${c.customer_name||'Unknown'}</div>
+        <div class="customer-meta">${c.customer_email||''} ${c.customer_phone?'· '+c.customer_phone:''}</div>
+      </div>
+      <div class="customer-stats">
+        <div class="cstat"><strong>${c.projectCount}</strong>projects</div>
+        <div class="cstat"><strong>${fmt$$(c.totalValue)}</strong>total value</div>
+        <div class="cstat"><strong>${badgeHtml(c.status||'new')}</strong></div>
+      </div>
+    </div>`).join('');
+}
+
+function filterCustomers(q){
+  document.querySelectorAll('.customer-card').forEach(c=>{
+    c.style.display=c.textContent.toLowerCase().includes(q.toLowerCase())?'flex':'none';
+  });
+}
+
+// ── VERSIONS ──
+async function loadVersions(){
+  const{data}=await sb.from('projects').select('*').order('created_at',{ascending:false});
+  const projects=data||[];
+  const tbody=document.getElementById('versions-tbody');
+  tbody.innerHTML=projects.map(p=>`
+    <tr class="clickable" onclick="openProject('${p.id}')">
+      <td>${p.customer_name||'—'}</td>
+      <td>${p.project_name||'—'}</td>
+      <td><span style="font-family:var(--mono);font-size:12px;color:var(--accent)">v1</span></td>
+      <td>${badgeHtml(p.status||'new')}</td>
+      <td style="font-family:var(--mono);font-size:12px">${fmtDate(p.created_at)}</td>
+    </tr>`).join('');
+
+  // KPIs
+  const avgVersions=1; // Will grow as we track versions
+  const mostRevisions=projects[0];
+  document.getElementById('version-kpis').innerHTML=`
+    <div class="kpi-card"><div class="kpi-label">Avg versions per app</div><div class="kpi-val">${avgVersions.toFixed(1)}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.min(avgVersions/5*100,100)}%"></div></div></div>
+    <div class="kpi-card"><div class="kpi-label">Total projects</div><div class="kpi-val">${projects.length}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div></div>
+    <div class="kpi-card"><div class="kpi-label">Most active customer</div><div class="kpi-val" style="font-size:16px">${mostRevisions?.customer_name||'—'}</div></div>`;
+}
+
+// ── CAMPAIGNS ──
+async function loadCampaigns(){
+  const{data}=await sb.from('projects').select('*').order('created_at',{ascending:false});
+  const projects=data||[];
+  const tbody=document.getElementById('campaigns-tbody');
+  tbody.innerHTML=projects.map(p=>`
+    <tr>
+      <td><strong>${p.customer_name||'—'}</strong><br/><span style="font-size:11px;color:var(--muted)">${p.project_name||''}</span></td>
+      <td>${p.drip_welcome?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${p.drip_7day?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${p.drip_30day?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${p.drip_features?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
+      <td><button class="btn btn-sm" onclick="openProject('${p.id}');setTimeout(()=>switchTab('drip',null),300)">Manage</button></td>
+    </tr>`).join('');
+}
+
+// ── KPIS ──
+async function loadKPIs(){
+  const{data}=await sb.from('projects').select('*');
+  const projects=data||[];
+  const total=projects.length;
+  const live=projects.filter(p=>p.status==='live').length;
+  const mrr=projects.filter(p=>p.status==='live').reduce((s,p)=>s+(p.monthly_fee||0),0);
+  const arr=mrr*12;
+  const pipeline=projects.filter(p=>!['cancelled','live'].includes(p.status)).reduce((s,p)=>s+(p.setup_fee||0),0);
+  const avgSetup=total?Math.round(projects.reduce((s,p)=>s+(p.setup_fee||0),0)/total):0;
+  const convRate=total?Math.round(live/total*100):0;
+
+  document.getElementById('kpis-content').innerHTML=`
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-label">Monthly recurring revenue</div><div class="stat-val green">${fmt$$(mrr)}</div><div class="stat-sub">From ${live} live apps</div></div>
+      <div class="stat-card"><div class="stat-label">Annual recurring revenue</div><div class="stat-val green">${fmt$$(arr)}</div><div class="stat-sub">Projected ARR</div></div>
+      <div class="stat-card"><div class="stat-label">Pipeline value</div><div class="stat-val accent">${fmt$$(pipeline)}</div><div class="stat-sub">Setup fees in progress</div></div>
+    </div>
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-label">Total projects</div><div class="stat-val blue">${total}</div><div class="stat-sub">All time</div></div>
+      <div class="stat-card"><div class="stat-label">Conversion rate</div><div class="stat-val">${convRate}%</div><div class="stat-sub">Submissions to live</div></div>
+      <div class="stat-card"><div class="stat-label">Avg setup fee</div><div class="stat-val">${fmt$$(avgSetup)}</div><div class="stat-sub">Per project</div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-header"><h3>Status breakdown</h3></div>
+      <table><thead><tr><th>Status</th><th>Count</th><th>% of total</th></tr></thead><tbody>
+        ${['new','reviewing','building','demo_sent','approved','live','cancelled'].map(s=>{
+          const count=projects.filter(p=>p.status===s).length;
+          const pct=total?Math.round(count/total*100):0;
+          return `<tr><td>${badgeHtml(s)}</td><td style="font-family:var(--mono)">${count}</td><td style="font-family:var(--mono)">${pct}%</td></tr>`;
+        }).join('')}
+      </tbody></table>
+    </div>`;
+}
+
+// ── TEAM ──
+async function loadTeam(){
+  const{data}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
+  const members=data||[];
+  const tbody=document.getElementById('team-tbody');
+  if(!members.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No team members yet</td></tr>';return}
+  tbody.innerHTML=members.map(m=>`
+    <tr>
+      <td><strong>${m.full_name||'—'}</strong></td>
+      <td style="font-family:var(--mono);font-size:13px">${m.email||'—'}</td>
+      <td>${badgeHtml(m.role||'employee')}</td>
+      <td style="font-family:var(--mono);font-size:12px">${fmtDate(m.created_at)}</td>
+    </tr>`).join('');
+}
+
+function showInvite(){
+  toast('Invite via Supabase Auth dashboard for now — full invite flow coming soon','');
+}
+
+// ── SUPABASE DB ADDITIONS ──
+// Add missing columns if they don't exist (run once)
+async function ensureColumns(){
+  // These columns need to be added to the projects table in Supabase
+  // Run this SQL in Supabase SQL editor:
+  // alter table projects add column if not exists internal_notes text;
+  // alter table projects add column if not exists demo_views integer default 0;
+  // alter table projects add column if not exists demo_last_viewed timestamp with time zone;
+  // alter table projects add column if not exists demo_approved boolean default false;
+  // alter table projects add column if not exists subscription_status text default 'pending';
+  // alter table projects add column if not exists drip_welcome timestamp with time zone;
+  // alter table projects add column if not exists drip_7day timestamp with time zone;
+  // alter table projects add column if not exists drip_30day timestamp with time zone;
+  // alter table projects add column if not exists drip_features timestamp with time zone;
+  // alter table projects add column if not exists live_url text;
+}
+
+// ── INIT ──
+checkAuth();
+</script>
+</body>
+</html>
