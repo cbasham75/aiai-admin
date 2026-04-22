@@ -910,7 +910,14 @@ Ref: ${p.ref_code||'N/A'}
 
 ## INSTRUCTIONS FOR CLAUDE CODE
 
-Build a single self-contained HTML file based on this customer brief. Requirements:
+FIRST — before writing any code, do this exactly:
+1. Create a folder named ${p.ref_code||'aiai-project'} in the current directory
+2. All files go inside that folder
+3. Save the completed app as ${p.ref_code||'aiai-project'}/index.html
+
+This is critical — every project must have its own folder so nothing ever gets overwritten.
+
+Then build a single self-contained HTML file based on this customer brief. Requirements:
 - Single index.html file only — no separate CSS or JS files
 - Vanilla JavaScript + Tailwind CSS via CDN (https://cdn.tailwindcss.com)
 - All data stored in localStorage for persistence
@@ -918,7 +925,12 @@ Build a single self-contained HTML file based on this customer brief. Requiremen
 - Professional, clean, mobile-responsive design
 - Must work by simply opening the HTML file in a browser
 
-Save the completed file as index.html in the current directory.
+FINALLY — after the file is built and working, deploy it to GitHub automatically:
+1. Run: git add ${p.ref_code||'aiai-project'}/
+2. Run: git commit -m "Add ${p.ref_code||'aiai-project'}: ${p.project_name||'customer app'}"
+3. Run: git push origin main
+4. Confirm the push succeeded
+5. Tell me the live URL which will be: https://cbasham75.github.io/aiai-demos/${p.ref_code||'aiai-project'}/
 
 ---
 
