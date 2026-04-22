@@ -925,12 +925,21 @@ Then build a single self-contained HTML file based on this customer brief. Requi
 - Professional, clean, mobile-responsive design
 - Must work by simply opening the HTML file in a browser
 
-FINALLY — after the file is built and working, deploy it to GitHub automatically:
+FINALLY — after the file is built and working, do these steps in order:
+
+STEP A — Deploy to GitHub:
 1. Run: git add ${p.ref_code||'aiai-project'}/
 2. Run: git commit -m "Add ${p.ref_code||'aiai-project'}: ${p.project_name||'customer app'}"
 3. Run: git push origin main
 4. Confirm the push succeeded
-5. Tell me the live URL which will be: https://cbasham75.github.io/aiai-demos/${p.ref_code||'aiai-project'}/
+
+STEP B — Update Supabase dashboard automatically:
+The live URL for this project is: https://cbasham75.github.io/aiai-demos/${p.ref_code||'aiai-project'}/
+Run this curl command to update the project record (refer to CLAUDE.md for credentials):
+curl -X PATCH "https://qunchnutxjbaxesajszm.supabase.co/rest/v1/projects?ref_code=eq.${p.ref_code||'aiai-project'}"   -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM"   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM"   -H "Content-Type: application/json"   -d "{\"demo_url\":\"https://cbasham75.github.io/aiai-demos/${p.ref_code||'aiai-project'}/\",\"status\":\"demo_sent\"}"
+
+STEP C — Report back:
+Tell me the live URL and confirm the Supabase update succeeded.
 
 ---
 
