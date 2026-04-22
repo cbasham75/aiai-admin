@@ -291,7 +291,23 @@ tr.clickable:hover td{background:var(--surface2)}
       <div class="topbar">
         <div class="topbar-title">Project Queue</div>
         <div class="topbar-actions">
-          <input class="search-input" placeholder="Search projects…" oninput="filterQueue(this.value)"/>
+          <input class="search-input" placeholder="Search projects…" id="queue-search" oninput="applyQueueFilters()"/>
+          <select class="status-select" id="filter-status" onchange="applyQueueFilters()" style="font-size:13px">
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="reviewing">Reviewing</option>
+            <option value="building">Building</option>
+            <option value="demo_sent">Demo Sent</option>
+            <option value="approved">Approved</option>
+            <option value="live">Live</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <select class="status-select" id="filter-complexity" onchange="applyQueueFilters()" style="font-size:13px">
+            <option value="">All complexity</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
           <button class="btn btn-sm" onclick="loadQueue()">↻ Refresh</button>
         </div>
       </div>
@@ -301,7 +317,7 @@ tr.clickable:hover td{background:var(--surface2)}
           <div class="table-header"><h3>All Projects</h3></div>
           <table>
             <thead><tr>
-              <th>Customer</th><th>Project</th><th>Quote</th><th>Status</th><th>Received</th><th>Demo Views</th>
+              <th>Ref</th><th>Customer</th><th>Project</th><th>Quote</th><th>Status</th><th>Received</th><th>Demo Views</th>
             </tr></thead>
             <tbody id="queue-tbody"></tbody>
           </table>
@@ -502,6 +518,7 @@ function renderQueue(projects){
   if(!projects.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">No projects yet</td></tr>';return}
   tbody.innerHTML=projects.map(p=>`
     <tr class="clickable" onclick="openProject('${p.id}')">
+      <td style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600">${p.ref_code||'—'}</td>
       <td><strong>${p.customer_name||'—'}</strong><br/><span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${p.customer_email||''}</span></td>
       <td>${p.project_name||'—'}</td>
       <td><strong>${fmt$$(p.setup_fee)}</strong><br/><span style="font-size:11px;color:var(--muted)">${fmt$$(p.monthly_fee)}/mo</span></td>
@@ -511,12 +528,18 @@ function renderQueue(projects){
     </tr>`).join('');
 }
 
-function filterQueue(q){
-  const filtered=allProjects.filter(p=>
-    (p.customer_name||'').toLowerCase().includes(q.toLowerCase())||
-    (p.project_name||'').toLowerCase().includes(q.toLowerCase())||
-    (p.customer_email||'').toLowerCase().includes(q.toLowerCase())
-  );
+function filterQueue(q){applyQueueFilters()}
+
+function applyQueueFilters(){
+  const q=(document.getElementById('queue-search')?.value||'').toLowerCase();
+  const status=document.getElementById('filter-status')?.value||'';
+  const complexity=document.getElementById('filter-complexity')?.value||'';
+  const filtered=allProjects.filter(p=>{
+    const matchSearch=!q||(p.customer_name||'').toLowerCase().includes(q)||(p.project_name||'').toLowerCase().includes(q)||(p.customer_email||'').toLowerCase().includes(q)||(p.ref_code||'').toLowerCase().includes(q);
+    const matchStatus=!status||p.status===status;
+    const matchComplexity=!complexity||p.complexity===complexity;
+    return matchSearch&&matchStatus&&matchComplexity;
+  });
   renderQueue(filtered);
 }
 
@@ -555,12 +578,26 @@ function renderTab(tab){
   if(tab==='overview'){
     body.innerHTML=`
       <div class="detail-section">
-        <h4>Customer info</h4>
-        <div class="info-grid">
-          <div class="info-item"><div class="lbl">Name</div><div class="val">${p.customer_name||'—'}</div></div>
-          <div class="info-item"><div class="lbl">Email</div><div class="val">${p.customer_email||'—'}</div></div>
-          <div class="info-item"><div class="lbl">Phone</div><div class="val">${p.customer_phone||'—'}</div></div>
-          <div class="info-item"><div class="lbl">Ref code</div><div class="val" style="font-family:var(--mono)">${p.ref_code||'—'}</div></div>
+        <h4>Customer info <button class="btn btn-sm" style="margin-left:8px;font-size:11px" onclick="toggleEditCustomer()">✏️ Edit</button></h4>
+        <div id="customer-view">
+          <div class="info-grid">
+            <div class="info-item"><div class="lbl">Name</div><div class="val">${p.customer_name||'—'}</div></div>
+            <div class="info-item"><div class="lbl">Email</div><div class="val">${p.customer_email||'—'}</div></div>
+            <div class="info-item"><div class="lbl">Phone</div><div class="val">${p.customer_phone||'—'}</div></div>
+            <div class="info-item"><div class="lbl">Ref code</div><div class="val" style="font-family:var(--mono)">${p.ref_code||'—'}</div></div>
+          </div>
+        </div>
+        <div id="customer-edit" style="display:none">
+          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div><div class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px">Name</div><input class="demo-input" id="edit-name" value="${p.customer_name||''}"/></div>
+            <div><div class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px">Email</div><input class="demo-input" id="edit-email" value="${p.customer_email||''}"/></div>
+            <div><div class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px">Phone</div><input class="demo-input" id="edit-phone" value="${p.customer_phone||''}"/></div>
+            <div><div class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px">Ref code</div><input class="demo-input" value="${p.ref_code||''}" disabled style="opacity:.5"/></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="saveCustomerInfo()">Save changes</button>
+            <button class="btn btn-sm" onclick="toggleEditCustomer()">Cancel</button>
+          </div>
         </div>
       </div>
       <div class="detail-section">
@@ -681,6 +718,33 @@ async function updateStatus(status){
   renderQueueStats(allProjects);
   document.getElementById('new-badge').textContent=allProjects.filter(p=>p.status==='new').length;
   toast('Status updated','success');
+}
+
+function toggleEditCustomer(){
+  const view=document.getElementById('customer-view');
+  const edit=document.getElementById('customer-edit');
+  if(!view||!edit)return;
+  const isEditing=edit.style.display!=='none';
+  view.style.display=isEditing?'block':'none';
+  edit.style.display=isEditing?'none':'block';
+}
+
+async function saveCustomerInfo(){
+  if(!currentProject)return;
+  const name=document.getElementById('edit-name')?.value.trim();
+  const email=document.getElementById('edit-email')?.value.trim();
+  const phone=document.getElementById('edit-phone')?.value.trim();
+  if(!name||!email){toast('Name and email are required','error');return}
+  const{error}=await sb.from('projects').update({customer_name:name,customer_email:email,customer_phone:phone||null}).eq('id',currentProject.id);
+  if(error){toast('Error saving customer info','error');return}
+  currentProject.customer_name=name;
+  currentProject.customer_email=email;
+  currentProject.customer_phone=phone;
+  allProjects=allProjects.map(p=>p.id===currentProject.id?{...p,customer_name:name,customer_email:email,customer_phone:phone}:p);
+  renderQueue(allProjects);
+  toggleEditCustomer();
+  switchTab('overview',null);
+  toast('Customer info updated','success');
 }
 
 async function saveNotes(){
