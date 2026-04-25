@@ -3,17 +3,19 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AIAI Admin</title>
+<title>Ainkle Admin</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='48' height='48' rx='12' fill='%231A1A2E'/%3E%3Cpath d='M18 12 L18 28 Q18 36 26 36 L34 36' stroke='%234FC3F7' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='18' cy='12' r='3' fill='%234FC3F7'/%3E%3C/svg%3E"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f4f0;--surface:#ffffff;--surface2:#f0efe9;--border:#e2e0d8;--border2:#d0cec4;
-  --text:#1a1a18;--muted:#7a7870;--accent:#e8a628;--accent2:#f0c060;--accent-dim:#fdf3e0;
+  --bg:#f0f4f8;--surface:#ffffff;--surface2:#e8f0f7;--border:#d0dce8;--border2:#b8cce0;
+  --text:#0d1520;--muted:#5a7a94;--accent:#4FC3F7;--accent2:#81d4fa;--accent-dim:#e0f4fd;
+  --midnight:#1A1A2E;--signal:#4FC3F7;
   --red:#dc2626;--red-dim:#fef2f2;--green:#16a34a;--green-dim:#f0fdf4;
-  --blue:#2563eb;--blue-dim:#eff6ff;--purple:#7c3aed;--purple-dim:#f5f3ff;
-  --amber:#d97706;--amber-dim:#fffbeb;
+  --blue:#0369a1;--blue-dim:#e0f2fe;--purple:#7c3aed;--purple-dim:#f5f3ff;
+  --amber:#0284c7;--amber-dim:#e0f2fe;
   --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
   --radius:10px;--sidebar:240px;
 }
@@ -24,8 +26,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex
 #login-screen{
   display:flex;align-items:center;justify-content:center;
   min-height:100vh;background:var(--bg);
-  background-image:radial-gradient(circle at 20% 50%, rgba(232,166,40,.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(232,166,40,.05) 0%, transparent 40%);
+  background-image:radial-gradient(circle at 20% 50%, rgba(79,195,247,.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(79,195,247,.05) 0%, transparent 40%);
 }
 .login-card{
   background:var(--surface);border:1px solid var(--border);border-radius:20px;
@@ -39,7 +41,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex
 .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.05em;margin-bottom:6px}
 .field input{width:100%;padding:12px 16px;border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:15px;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s}
 .field input:focus{border-color:var(--accent)}
-.login-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0a0a0a;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px}
+.login-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0d1520;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px}
 .login-btn:hover{opacity:.88;transform:translateY(-1px)}
 .login-error{font-size:13px;color:var(--red);margin-top:12px;text-align:center;display:none}
 
@@ -50,11 +52,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex
 /* ── SIDEBAR ── */
 .sidebar{
   width:var(--sidebar);flex-shrink:0;
-  background:var(--text);color:#f0ece4;
+  background:var(--midnight);color:#f0f4ff;
   display:flex;flex-direction:column;
   height:100vh;overflow:hidden;
 }
-.sidebar-logo{padding:24px 20px 20px;font-size:20px;font-weight:800;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo{padding:20px 20px 16px;font-size:20px;font-weight:800;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
 .sidebar-logo span{color:var(--accent)}
 .sidebar-logo small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,.4);font-family:var(--mono);margin-top:2px}
 .nav-section{padding:16px 12px 8px;font-size:10px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:.12em;font-family:var(--mono);text-transform:uppercase}
@@ -65,9 +67,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex
   border:none;background:none;width:calc(100% - 16px);text-align:left;
 }
 .nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9)}
-.nav-item.active{background:rgba(232,166,40,.15);color:var(--accent)}
+.nav-item.active{background:rgba(79,195,247,.15);color:var(--signal)}
 .nav-item .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-.nav-badge{margin-left:auto;background:var(--accent);color:#0a0a0a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;font-family:var(--mono)}
+.nav-badge{margin-left:auto;background:var(--signal);color:#0d1520;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;font-family:var(--mono)}
 .sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid rgba(255,255,255,.08)}
 .user-chip{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.5)}
 .user-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
@@ -88,7 +90,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex
 /* ── BUTTONS ── */
 .btn{font-family:var(--font);font-size:13px;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
 .btn:hover{border-color:var(--border2);background:var(--surface2)}
-.btn-primary{background:var(--accent);color:#0a0a0a;border-color:var(--accent)}
+.btn-primary{background:var(--accent);color:#0d1520;border-color:var(--accent)}
 .btn-primary:hover{opacity:.88;background:var(--accent)}
 .btn-danger{background:var(--red-dim);color:var(--red);border-color:#fca5a5}
 .btn-danger:hover{background:#fee2e2}
@@ -231,7 +233,7 @@ tr.clickable:hover td{background:var(--surface2)}
 .kpi-label{font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:8px}
 .kpi-val{font-size:24px;font-weight:800;letter-spacing:-.5px}
 .kpi-bar{height:4px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden}
-.kpi-bar-fill{height:100%;background:var(--accent);border-radius:2px}
+.kpi-bar-fill{height:100%;background:var(--signal);border-radius:2px}
 
 @media(max-width:900px){
   .sidebar{width:60px}
@@ -250,7 +252,17 @@ tr.clickable:hover td{background:var(--surface2)}
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">AI<span>AI</span></div>
+    <div class="login-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" height="36">
+        <rect width="280" height="64" rx="12" fill="#1A1A2E"/>
+        <rect x="8" y="8" width="48" height="48" rx="10" fill="#4FC3F7"/>
+        <path d="M26 20 L26 36 Q26 44 34 44 L42 44" stroke="#1A1A2E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="26" cy="20" r="3" fill="#1A1A2E"/>
+        <text x="68" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">A</text>
+        <text x="92" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">I</text>
+        <text x="110" y="46" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#1A1A2E" letter-spacing="-2">nkle</text>
+      </svg>
+    </div>
     <div class="login-sub">Employee dashboard — sign in to continue</div>
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@aiai.app" autocomplete="email"/></div>
     <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
@@ -264,7 +276,16 @@ tr.clickable:hover td{background:var(--surface2)}
 
   <!-- SIDEBAR -->
   <div class="sidebar">
-    <div class="sidebar-logo">AI<span>AI</span><small>Admin Dashboard</small></div>
+    <div class="sidebar-logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" height="28">
+      <rect x="0" y="8" width="48" height="48" rx="10" fill="#1A1A2E"/>
+      <path d="M18 20 L18 36 Q18 44 26 44 L34 44" stroke="#4FC3F7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="18" cy="20" r="3" fill="#4FC3F7"/>
+      <text x="58" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">A</text>
+      <text x="82" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">I</text>
+      <text x="100" y="46" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff" letter-spacing="-2">nkle</text>
+    </svg>
+  </div>
     <div class="nav-section">Main</div>
     <button class="nav-item active" onclick="showPage('queue',this)"><span class="icon">📥</span><span>Queue</span><span class="nav-badge" id="new-badge">0</span></button>
     <button class="nav-item" onclick="showPage('customers',this)"><span class="icon">👥</span><span>Customers</span></button>
@@ -394,7 +415,7 @@ tr.clickable:hover td{background:var(--surface2)}
   <div class="panel-header">
     <div>
       <div class="panel-title" id="panel-title">Project Name</div>
-      <div class="panel-ref" id="panel-ref">AIAI-XXXX</div>
+      <div class="panel-ref" id="panel-ref">ANK-XXXX</div>
     </div>
     <button class="panel-close" onclick="closePanel()">×</button>
   </div>
@@ -1068,7 +1089,7 @@ ${p.internal_notes||'No internal notes.'}
 - Success/error feedback on all actions
 
 ---
-*Generated by AIAI Admin Dashboard*
+*Generated by Ainkle Admin*
 *Customer ref: ${p.ref_code||'N/A'}*`;
 
   // Download as markdown file
