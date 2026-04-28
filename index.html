@@ -669,8 +669,20 @@ function renderTab(tab){
           <div class="info-item"><div class="lbl">Times viewed</div><div class="val" style="color:var(--blue)">${p.demo_views||0}</div></div>
           <div class="info-item"><div class="lbl">Last viewed</div><div class="val">${fmtDate(p.demo_last_viewed)}</div></div>
           <div class="info-item"><div class="lbl">Approved</div><div class="val">${p.demo_approved?'✅ Yes':'Pending'}</div></div>
-          <div class="info-item"><div class="lbl">Live URL</div><div class="val" style="font-family:var(--mono);font-size:12px">${p.live_url||'Not set'}</div></div>
+          <div class="info-item"><div class="lbl">Expires</div><div class="val" style="font-family:var(--mono);font-size:12px">${p.demo_expires_at?fmtDate(p.demo_expires_at):'Not set'}</div></div>
         </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-sm" onclick="setDemoExpiry(48)">Set 48hr expiry</button>
+          <button class="btn btn-sm" onclick="setDemoExpiry(24)">+24hr extension</button>
+          ${p.demo_approved?'<span style="color:var(--green);font-size:13px;display:flex;align-items:center">✅ Approved</span>':'<span style="color:var(--muted);font-size:13px;display:flex;align-items:center">⏳ Awaiting approval</span>'}
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Demo approval link</h4>
+        <div style="font-family:var(--mono);font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;word-break:break-all;color:var(--accent);margin-bottom:8px">
+          https://cbasham75.github.io/aiai-admin/approval.html?ref=${p.ref_code}
+        </div>
+        <button class="btn btn-sm" onclick="navigator.clipboard.writeText('https://cbasham75.github.io/aiai-admin/approval.html?ref=${p.ref_code}');toast('Link copied!','success')">Copy approval link</button>
       </div>
       <div class="detail-section">
         <h4>Send demo email</h4>
@@ -739,6 +751,19 @@ async function updateStatus(status){
   renderQueueStats(allProjects);
   document.getElementById('new-badge').textContent=allProjects.filter(p=>p.status==='new').length;
   toast('Status updated','success');
+}
+
+async function setDemoExpiry(hours){
+  if(!currentProject)return;
+  const base=currentProject.demo_expires_at&&new Date(currentProject.demo_expires_at)>new Date()
+    ?new Date(currentProject.demo_expires_at)
+    :new Date();
+  const newExpiry=new Date(base.getTime()+hours*3600000).toISOString();
+  const{error}=await sb.from('projects').update({demo_expires_at:newExpiry}).eq('id',currentProject.id);
+  if(error){toast('Error setting expiry','error');return}
+  currentProject.demo_expires_at=newExpiry;
+  toast('Demo expiry set to '+new Date(newExpiry).toLocaleString(),'success');
+  renderTab('demo');
 }
 
 function toggleEditCustomer(){
