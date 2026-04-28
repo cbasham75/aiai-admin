@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ainkle — Review Your App</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='48' height='48' rx='12' fill='%231A1A2E'/%3E%3Cpath d='M18 12 L18 28 Q18 36 26 36 L34 36' stroke='%234FC3F7' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='18' cy='12' r='3' fill='%234FC3F7'/%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f1a;--surface:#131620;--surface2:#1a1e2e;
+  --border:#1e2236;--border2:#262b40;
+  --text:#f0f4ff;--muted:#6b7494;
+  --accent:#4FC3F7;--accent2:#81d4fa;--accent-dim:#0d2233;
+  --midnight:#1A1A2E;--green:#4ecb71;--green-dim:#0d2a1a;
+  --amber:#f59e0b;--red:#ef4444;
+  --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;flex-direction:column}
+
+/* ── TOP BAR ── */
+.topbar{
+  flex-shrink:0;
+  background:var(--midnight);
+  border-bottom:1px solid rgba(79,195,247,.15);
+  padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  z-index:10;
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{flex-shrink:0}
+.logo-text{font-size:18px;font-weight:800}
+.logo-text span{color:var(--accent)}
+.project-info{text-align:center}
+.project-name{font-size:14px;font-weight:700;color:var(--text)}
+.project-ref{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.expiry-badge{
+  font-family:var(--mono);font-size:11px;
+  padding:5px 12px;border-radius:100px;
+  background:rgba(245,158,11,.1);color:var(--amber);
+  border:1px solid rgba(245,158,11,.2);
+}
+.expiry-badge.expired{background:rgba(239,68,68,.1);color:var(--red);border-color:rgba(239,68,68,.2)}
+
+/* ── MAIN LAYOUT ── */
+.main{flex:1;display:flex;overflow:hidden}
+
+/* ── IFRAME PANEL ── */
+.preview-panel{
+  flex:1;position:relative;overflow:hidden;
+  border-right:1px solid var(--border);
+}
+.preview-panel iframe{
+  width:100%;height:100%;border:none;
+  background:white;
+}
+.watermark{
+  position:absolute;bottom:16px;right:16px;
+  background:rgba(13,15,26,.85);backdrop-filter:blur(8px);
+  border:1px solid rgba(79,195,247,.2);border-radius:8px;
+  padding:8px 14px;
+  font-family:var(--mono);font-size:11px;color:var(--accent);
+  pointer-events:none;z-index:5;
+  display:flex;align-items:center;gap:6px;
+}
+
+/* ── EXPIRED OVERLAY ── */
+.expired-overlay{
+  position:absolute;inset:0;
+  background:rgba(13,15,26,.92);backdrop-filter:blur(12px);
+  display:none;align-items:center;justify-content:center;flex-direction:column;
+  z-index:20;text-align:center;padding:40px;
+}
+.expired-overlay.show{display:flex}
+.expired-icon{font-size:48px;margin-bottom:16px}
+.expired-title{font-size:24px;font-weight:800;margin-bottom:8px}
+.expired-sub{font-size:14px;color:var(--muted);max-width:320px;line-height:1.6;margin-bottom:24px}
+
+/* ── ACTION PANEL ── */
+.action-panel{
+  width:360px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  background:var(--surface);
+}
+.action-header{
+  padding:24px 24px 0;flex-shrink:0;
+}
+.action-header h2{font-size:20px;font-weight:800;margin-bottom:6px}
+.action-header p{font-size:13px;color:var(--muted);line-height:1.6}
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+.action-body{padding:0 24px 24px;flex:1}
+
+/* ── APPROVE BUTTON ── */
+.approve-btn{
+  width:100%;padding:18px;border-radius:14px;border:none;
+  background:linear-gradient(135deg,#4FC3F7,#0ea5e9);
+  color:#0d0f1a;font-family:var(--font);font-size:15px;font-weight:800;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:transform .2s,box-shadow .2s;
+  box-shadow:0 4px 20px rgba(79,195,247,.3);
+  margin-bottom:12px;letter-spacing:-.2px;
+  position:relative;overflow:hidden;
+}
+.approve-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 60%);
+}
+.approve-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(79,195,247,.4)}
+.approve-btn:active{transform:translateY(0)}
+.approve-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.robot-icon{font-size:22px;position:relative;z-index:1}
+.btn-label{position:relative;z-index:1}
+
+/* ── REVISE BUTTON ── */
+.revise-btn{
+  width:100%;padding:14px;border-radius:12px;
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:border-color .2s,background .2s;
+  margin-bottom:20px;
+}
+.revise-btn:hover{border-color:var(--accent);background:var(--accent-dim)}
+
+/* ── PRICING SUMMARY ── */
+.pricing-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:16px;margin-bottom:20px;
+}
+.pricing-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0}
+.pricing-row .lbl{color:var(--muted)}
+.pricing-row .val{font-weight:700;font-family:var(--mono)}
+.pricing-row.total{border-top:1px solid var(--border);margin-top:6px;padding-top:12px}
+.pricing-row.total .lbl{color:var(--text);font-weight:700;font-size:14px}
+.pricing-row.total .val{color:var(--accent);font-size:16px}
+.founding-badge{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.2);
+  border-radius:8px;padding:8px 12px;margin-bottom:16px;
+  font-size:12px;color:var(--accent);
+}
+
+/* ── REVISION FORM ── */
+.revision-form{display:none}
+.revision-form.show{display:block}
+.form-label{font-size:12px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.05em;margin-bottom:6px;display:block}
+textarea.revision-input{
+  width:100%;min-height:120px;resize:vertical;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:10px;padding:12px 14px;
+  font-family:var(--font);font-size:14px;color:var(--text);
+  outline:none;line-height:1.6;margin-bottom:12px;
+  transition:border-color .2s;
+}
+textarea.revision-input::placeholder{color:var(--muted)}
+textarea.revision-input:focus{border-color:var(--accent)}
+.submit-revision-btn{
+  width:100%;padding:12px;border-radius:10px;border:none;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;
+  cursor:pointer;transition:border-color .2s,background .2s;
+}
+.submit-revision-btn:hover{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+
+/* ── GUARANTEE ── */
+.guarantee{
+  display:flex;gap:10px;align-items:flex-start;
+  font-size:12px;color:var(--muted);line-height:1.5;
+  margin-bottom:16px;
+}
+.guarantee-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* ── SUCCESS STATE ── */
+.success-state{display:none;text-align:center;padding:32px 24px}
+.success-state.show{display:block}
+.success-icon{font-size:48px;margin-bottom:16px}
+.success-title{font-size:20px;font-weight:800;margin-bottom:8px}
+.success-sub{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ── HINDRANCE BANNER ── */
+.hindrance{
+  position:fixed;bottom:0;left:0;right:360px;
+  background:var(--midnight);border-top:1px solid rgba(79,195,247,.3);
+  padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  z-index:50;
+  transform:translateY(100%);
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.hindrance.show{transform:translateY(0)}
+.hindrance-text{font-size:13px;color:var(--muted)}
+.hindrance-text strong{color:var(--text)}
+.hindrance-actions{display:flex;gap:8px;flex-shrink:0}
+.hindrance-cta{
+  font-size:12px;font-weight:700;padding:8px 16px;border-radius:8px;
+  background:var(--accent);color:#0d0f1a;border:none;cursor:pointer;
+  font-family:var(--font);white-space:nowrap;
+}
+.hindrance-dismiss{
+  font-size:12px;padding:8px 12px;border-radius:8px;
+  background:transparent;color:var(--muted);border:1px solid var(--border2);
+  cursor:pointer;font-family:var(--font);white-space:nowrap;
+}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;top:80px;left:50%;transform:translateX(-50%);
+  background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);padding:12px 24px;border-radius:10px;
+  font-size:14px;z-index:999;opacity:0;transition:opacity .3s;
+  pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 24px rgba(0,0,0,.3);
+}
+.toast.show{opacity:1}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--red);color:var(--red)}
+
+@media(max-width:768px){
+  .main{flex-direction:column}
+  .preview-panel{flex:1;min-height:50vh;border-right:none;border-bottom:1px solid var(--border)}
+  .action-panel{width:100%;max-height:50vh}
+  .hindrance{left:0;right:0}
+  .project-info{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+      <rect width="48" height="48" rx="12" fill="#1A1A2E"/>
+      <path d="M18 12 L18 28 Q18 36 26 36 L34 36" stroke="#4FC3F7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="18" cy="12" r="3" fill="#4FC3F7"/>
+    </svg>
+    <div class="logo-text"><span>AI</span>nkle</div>
+  </div>
+  <div class="project-info">
+    <div class="project-name" id="project-name">Loading your app...</div>
+    <div class="project-ref" id="project-ref">—</div>
+  </div>
+  <div class="expiry-badge" id="expiry-badge">⏱ Loading...</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- PREVIEW -->
+  <div class="preview-panel">
+    <iframe id="app-frame" src="about:blank" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+    <div class="watermark">
+      <svg width="12" height="12" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1A1A2E"/><path d="M18 12 L18 28 Q18 36 26 36 L34 36" stroke="#4FC3F7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="18" cy="12" r="3" fill="#4FC3F7"/></svg>
+      Ainkle Demo — Not yet activated
+    </div>
+
+    <!-- EXPIRED OVERLAY -->
+    <div class="expired-overlay" id="expired-overlay">
+      <div class="expired-icon">⏰</div>
+      <div class="expired-title">This demo has expired</div>
+      <div class="expired-sub">Your 48-hour preview period has ended. Request a reactivation and we'll extend it by 24 hours.</div>
+      <button class="approve-btn" style="width:auto;padding:14px 28px" onclick="requestReactivation()">
+        <span class="robot-icon">🤖</span>
+        <span class="btn-label">Request reactivation</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ACTION PANEL -->
+  <div class="action-panel">
+    <div class="action-header">
+      <h2>Your app is ready.</h2>
+      <p>Take it for a spin — explore every feature. When you're happy, approve it and we'll get it live on your URL right away.</p>
+    </div>
+
+    <div class="action-body">
+      <div class="divider"></div>
+
+      <!-- DEFAULT STATE -->
+      <div id="action-default">
+        <!-- Founding member badge - shown if applicable -->
+        <div class="founding-badge" id="founding-badge" style="display:none">
+          ⭐ Founding member offer applied — setup fee waived
+        </div>
+
+        <!-- Pricing -->
+        <div class="pricing-card" id="pricing-card">
+          <div class="pricing-row"><span class="lbl">Setup fee</span><span class="val" id="price-setup">—</span></div>
+          <div class="pricing-row"><span class="lbl">Monthly hosting + support</span><span class="val" id="price-monthly">—</span></div>
+          <div class="pricing-row total"><span class="lbl">Due today</span><span class="val" id="price-today">—</span></div>
+        </div>
+
+        <!-- Approve button -->
+        <button class="approve-btn" id="approve-btn" onclick="handleApprove()">
+          <span class="robot-icon">🤖</span>
+          <span class="btn-label">Approve &amp; Subscribe →</span>
+        </button>
+
+        <!-- Revise button -->
+        <button class="revise-btn" onclick="showRevisionForm()">
+          ✏️ Request revisions
+        </button>
+
+        <!-- Guarantees -->
+        <div class="guarantee">
+          <span class="guarantee-icon">🔒</span>
+          <span>No payment processed today. Our team will contact you within 1 business day to confirm details and complete setup.</span>
+        </div>
+        <div class="guarantee">
+          <span class="guarantee-icon">🔄</span>
+          <span>Cancel anytime. No long-term contracts.</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Revision form -->
+        <div class="revision-form" id="revision-form">
+          <label class="form-label">What would you like changed?</label>
+          <textarea class="revision-input" id="revision-text" placeholder="Describe the changes you'd like — be as specific as possible. What's not working? What would you like added or adjusted?"></textarea>
+          <button class="submit-revision-btn" onclick="submitRevision()">Send revision request →</button>
+          <div style="margin-top:8px;text-align:center">
+            <button style="background:none;border:none;font-size:12px;color:var(--muted);cursor:pointer;font-family:var(--font)" onclick="hideRevisionForm()">← Back</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div class="success-state" id="success-state">
+        <div class="success-icon" id="success-icon">🤖🤖</div>
+        <div class="success-title" id="success-title">You're approved!</div>
+        <div class="success-sub" id="success-sub">Our team will be in touch within 1 business day to complete setup and get your app live.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- HINDRANCE BANNER -->
+<div class="hindrance" id="hindrance">
+  <div class="hindrance-text"><strong>Like what you see?</strong> Approve your app and get it live today.</div>
+  <div class="hindrance-actions">
+    <button class="hindrance-dismiss" onclick="dismissHindrance()">Later</button>
+    <button class="hindrance-cta" onclick="handleApprove()">🤖 Approve & Subscribe</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://qunchnutxjbaxesajszm.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM';
+const CLOUDFLARE='https://aiai-proxy.aiai-admin.workers.dev/';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let project=null;
+let hindranceTimer=null;
+let hindranceDismissed=false;
+
+// ── GET REF CODE FROM URL ──
+function getRefCode(){
+  const params=new URLSearchParams(window.location.search);
+  return params.get('ref')||params.get('r')||null;
+}
+
+// ── FORMAT ──
+function fmt$$(n){return n===0?'$0 — Waived':'$'+(n||0).toLocaleString()}
+function fmtExpiry(d){
+  if(!d)return null;
+  const diff=new Date(d)-new Date();
+  if(diff<=0)return null;
+  const hrs=Math.floor(diff/3600000);
+  const mins=Math.floor((diff%3600000)/60000);
+  if(hrs>0)return `${hrs}h ${mins}m remaining`;
+  return `${mins}m remaining`;
+}
+
+// ── TOAST ──
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',4000);
+}
+
+// ── LOAD PROJECT ──
+async function loadProject(){
+  const ref=getRefCode();
+  if(!ref){
+    showError('No project reference found. Check your demo link.');
+    return;
+  }
+
+  const{data,error}=await sb.from('projects').select('*').eq('ref_code',ref).single();
+  if(error||!data){
+    showError('Project not found. Please check your demo link.');
+    return;
+  }
+
+  project=data;
+
+  // Set project info
+  document.getElementById('project-name').textContent=data.project_name||'Your App';
+  document.getElementById('project-ref').textContent=data.ref_code;
+
+  // Set pricing
+  const setupFee=data.setup_fee||0;
+  const monthlyFee=data.monthly_fee||0;
+  document.getElementById('price-setup').textContent=fmt$$(setupFee);
+  document.getElementById('price-monthly').textContent='$'+(monthlyFee||0).toLocaleString()+'/mo';
+  document.getElementById('price-today').textContent=fmt$$(setupFee);
+
+  // Show founding member badge if setup fee is 0
+  if(setupFee===0){
+    document.getElementById('founding-badge').style.display='flex';
+    document.getElementById('price-today').textContent='$0 — Founding member';
+  }
+
+  // Check expiry
+  const expiry=data.demo_expires_at;
+  const expiryBadge=document.getElementById('expiry-badge');
+  if(expiry){
+    const remaining=fmtExpiry(expiry);
+    if(!remaining){
+      // Expired
+      expiryBadge.textContent='⏰ Demo expired';
+      expiryBadge.classList.add('expired');
+      document.getElementById('expired-overlay').classList.add('show');
+      document.getElementById('approve-btn').disabled=true;
+    } else {
+      expiryBadge.textContent='⏱ '+remaining;
+      // Update every minute
+      setInterval(()=>{
+        const r=fmtExpiry(expiry);
+        if(!r){
+          expiryBadge.textContent='⏰ Demo expired';
+          expiryBadge.classList.add('expired');
+          document.getElementById('expired-overlay').classList.add('show');
+          document.getElementById('approve-btn').disabled=true;
+          clearInterval();
+        } else {
+          expiryBadge.textContent='⏱ '+r;
+        }
+      },60000);
+    }
+  } else {
+    expiryBadge.textContent='⏱ 48hr preview';
+  }
+
+  // Load demo in iframe
+  if(data.demo_url){
+    document.getElementById('app-frame').src=data.demo_url;
+  } else {
+    document.getElementById('app-frame').srcdoc='<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666">Demo not yet available</div>';
+  }
+
+  // Track demo view
+  await sb.from('projects').update({
+    demo_views:(data.demo_views||0)+1,
+    demo_last_viewed:new Date().toISOString()
+  }).eq('ref_code',ref);
+
+  // Start hindrance timer
+  startHindranceCycle();
+}
+
+function showError(msg){
+  document.getElementById('project-name').textContent='Error';
+  document.getElementById('project-ref').textContent=msg;
+  document.getElementById('expiry-badge').textContent='—';
+}
+
+// ── HINDRANCE ──
+function startHindranceCycle(){
+  hindranceTimer=setTimeout(()=>showHindrance(),12000);
+}
+
+function showHindrance(){
+  if(hindranceDismissed)return;
+  document.getElementById('hindrance').classList.add('show');
+}
+
+function dismissHindrance(){
+  document.getElementById('hindrance').classList.remove('show');
+  hindranceDismissed=false;
+  hindranceTimer=setTimeout(()=>showHindrance(),12000);
+}
+
+// ── APPROVE ──
+async function handleApprove(){
+  if(!project)return;
+  document.getElementById('approve-btn').disabled=true;
+  document.getElementById('hindrance').classList.remove('show');
+
+  try{
+    // Update Supabase
+    await sb.from('projects').update({
+      demo_approved:true,
+      demo_approved_at:new Date().toISOString(),
+      status:'approved'
+    }).eq('ref_code',project.ref_code);
+
+    // Notify AIAI team
+    await fetch(CLOUDFLARE,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        _action:'send_email',
+        to:'aiai.admin@gmail.com',
+        subject:`🎉 App approved! — ${project.project_name} (${project.ref_code})`,
+        html:`
+          <h2>App approved by customer!</h2>
+          <p><strong>Customer:</strong> ${project.customer_name}</p>
+          <p><strong>Email:</strong> ${project.customer_email}</p>
+          <p><strong>Project:</strong> ${project.project_name}</p>
+          <p><strong>Ref:</strong> ${project.ref_code}</p>
+          <p><strong>Setup fee:</strong> $${project.setup_fee?.toLocaleString()}</p>
+          <p><strong>Monthly fee:</strong> $${project.monthly_fee?.toLocaleString()}/mo</p>
+          <hr/>
+          <p>Next step: send payment link and complete onboarding.</p>
+          <p><a href="https://cbasham75.github.io/aiai-admin/">View in dashboard →</a></p>
+        `
+      })
+    });
+
+    // Show success
+    document.getElementById('action-default').style.display='none';
+    const ss=document.getElementById('success-state');
+    ss.classList.add('show');
+    ss.querySelector('.success-icon').textContent='🤖🤖';
+    ss.querySelector('.success-title').textContent="You're all set!";
+    ss.querySelector('.success-sub').textContent=`Thanks ${project.customer_name?.split(' ')[0]||''}! Our team will reach out within 1 business day to complete setup and get ${project.project_name} live on your URL.`;
+
+  }catch(e){
+    console.error(e);
+    toast('Something went wrong. Please try again.','error');
+    document.getElementById('approve-btn').disabled=false;
+  }
+}
+
+// ── REVISION ──
+function showRevisionForm(){
+  document.getElementById('revision-form').classList.add('show');
+  document.getElementById('revision-text').focus();
+}
+function hideRevisionForm(){
+  document.getElementById('revision-form').classList.remove('show');
+}
+
+async function submitRevision(){
+  if(!project)return;
+  const text=document.getElementById('revision-text').value.trim();
+  if(!text){toast('Please describe what you\'d like changed','error');return}
+
+  try{
+    // Save feedback
+    await sb.from('messages').insert([{
+      project_id:project.id,
+      sender:'customer',
+      content:'REVISION REQUEST: '+text
+    }]);
+
+    // Notify team
+    await fetch(CLOUDFLARE,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        _action:'send_email',
+        to:'aiai.admin@gmail.com',
+        subject:`✏️ Revision requested — ${project.project_name} (${project.ref_code})`,
+        html:`
+          <h2>Customer requested revisions</h2>
+          <p><strong>Customer:</strong> ${project.customer_name}</p>
+          <p><strong>Email:</strong> ${project.customer_email}</p>
+          <p><strong>Project:</strong> ${project.project_name}</p>
+          <p><strong>Ref:</strong> ${project.ref_code}</p>
+          <hr/>
+          <h3>Revision request:</h3>
+          <p>${text}</p>
+          <hr/>
+          <p><a href="https://cbasham75.github.io/aiai-admin/">View in dashboard →</a></p>
+        `
+      })
+    });
+
+    // Show success
+    document.getElementById('action-default').style.display='none';
+    const ss=document.getElementById('success-state');
+    ss.classList.add('show');
+    ss.querySelector('.success-icon').textContent='✏️';
+    ss.querySelector('.success-title').textContent='Revision request sent!';
+    ss.querySelector('.success-sub').textContent='Our team has your feedback and will be in touch within 1 business day with an updated demo.';
+
+  }catch(e){
+    console.error(e);
+    toast('Error sending request. Please try again.','error');
+  }
+}
+
+// ── REACTIVATION ──
+async function requestReactivation(){
+  if(!project)return;
+  try{
+    await fetch(CLOUDFLARE,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        _action:'send_email',
+        to:'aiai.admin@gmail.com',
+        subject:`⏰ Demo reactivation requested — ${project.project_name} (${project.ref_code})`,
+        html:`
+          <h2>Demo reactivation requested</h2>
+          <p><strong>Customer:</strong> ${project.customer_name}</p>
+          <p><strong>Email:</strong> ${project.customer_email}</p>
+          <p><strong>Project:</strong> ${project.project_name}</p>
+          <p><strong>Ref:</strong> ${project.ref_code}</p>
+          <p>Extend demo_expires_at by 24 hours in the dashboard.</p>
+          <p><a href="https://cbasham75.github.io/aiai-admin/">View in dashboard →</a></p>
+        `
+      })
+    });
+
+    document.getElementById('expired-overlay').innerHTML=`
+      <div class="expired-icon">✅</div>
+      <div class="expired-title">Request sent!</div>
+      <div class="expired-sub">Our team will reactivate your demo shortly. We'll email you at ${project.customer_email} when it's ready.</div>`;
+
+  }catch(e){
+    toast('Error sending request. Please try again.','error');
+  }
+}
+
+// ── INIT ──
+loadProject();
+</script>
+</body>
+</html>
