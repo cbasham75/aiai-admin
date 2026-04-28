@@ -815,21 +815,23 @@ async function sendDemoEmail(){
   if(!currentProject){toast('No project selected','error');return}
   if(!currentProject.demo_url){toast('Set a demo URL first','error');return}
   const p=currentProject;
+  const approvalLink=`https://cbasham75.github.io/aiai-admin/approval.html?ref=${p.ref_code}`;
   try{
-    const res=await fetch(CLOUDFLARE_WORKER,{
+    await fetch(CLOUDFLARE_WORKER,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         _action:'send_email',
         to:p.customer_email,
-        subject:`Your AIAI app is ready for review — ${p.project_name}`,
+        subject:`Your Ainkle app is ready for review — ${p.project_name}`,
         html:`<h2>Your app is ready!</h2>
 <p>Hi ${p.customer_name?.split(' ')[0]||'there'},</p>
 <p>Great news — your <strong>${p.project_name}</strong> MVP is built and ready for your review.</p>
-<p><a href="${p.demo_url}" style="background:#e8a628;color:#000;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:16px 0">👀 Review your app</a></p>
-<p>Take it for a spin and let us know what you think. Once you approve, we'll get it live on your URL right away.</p>
+<p><a href="${approvalLink}" style="background:#4FC3F7;color:#0d0f1a;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:16px 0">&#x1F440; Review your app</a></p>
+<p>Take it for a spin and let us know what you think. You can approve it or request changes directly from the review page.</p>
+<p>Your demo is available for 48 hours.</p>
 <p>Reference: <strong>${p.ref_code}</strong></p>
-<p>— The AIAI Team</p>`
+<p>&#x2014; The Ainkle Team</p>`
       })
     });
     toast('Demo email sent to '+p.customer_email,'success');
