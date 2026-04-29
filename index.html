@@ -3,1149 +3,1015 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Ainkle Admin</title>
+<title>Ainkle — Your App, Built by AI</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='48' height='48' rx='12' fill='%231A1A2E'/%3E%3Cpath d='M18 12 L18 28 Q18 36 26 36 L34 36' stroke='%234FC3F7' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='18' cy='12' r='3' fill='%234FC3F7'/%3E%3C/svg%3E"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f0f4f8;--surface:#ffffff;--surface2:#e8f0f7;--border:#d0dce8;--border2:#b8cce0;
-  --text:#0d1520;--muted:#5a7a94;--accent:#4FC3F7;--accent2:#81d4fa;--accent-dim:#e0f4fd;
-  --midnight:#1A1A2E;--signal:#4FC3F7;
-  --red:#dc2626;--red-dim:#fef2f2;--green:#16a34a;--green-dim:#f0fdf4;
-  --blue:#0369a1;--blue-dim:#e0f2fe;--purple:#7c3aed;--purple-dim:#f5f3ff;
-  --amber:#0284c7;--amber-dim:#e0f2fe;
-  --font:'Syne',sans-serif;--mono:'DM Mono',monospace;
-  --radius:10px;--sidebar:240px;
+  --bg:#0d0f1a;--surface:#131620;--surface2:#1a1e2e;--border:#1e2236;--border2:#262b40;
+  --text:#f0f4ff;--muted:#6b7494;--accent:#4FC3F7;--accent2:#81d4fa;--accent-dim:#0d2233;
+  --midnight:#1A1A2E;--red:#e85050;--green:#4ecb71;--radius:12px;
+  --font:'Syne',sans-serif;--mono:'DM Mono',monospace;--serif:'Instrument Serif',serif;
 }
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;flex-direction:column}
-
-/* ── LOGIN ── */
-#login-screen{
-  display:flex;align-items:center;justify-content:center;
-  min-height:100vh;background:var(--bg);
-  background-image:radial-gradient(circle at 20% 50%, rgba(79,195,247,.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(79,195,247,.05) 0%, transparent 40%);
-}
-.login-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:20px;
-  padding:48px;width:100%;max-width:400px;
-  box-shadow:0 4px 24px rgba(0,0,0,.06);
-}
-.login-logo{font-size:28px;font-weight:800;margin-bottom:8px}
-.login-logo span{color:var(--accent)}
-.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.05em;margin-bottom:6px}
-.field input{width:100%;padding:12px 16px;border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:15px;color:var(--text);background:var(--surface);outline:none;transition:border-color .2s}
-.field input:focus{border-color:var(--accent)}
-.login-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0d1520;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:8px}
-.login-btn:hover{opacity:.88;transform:translateY(-1px)}
-.login-error{font-size:13px;color:var(--red);margin-top:12px;text-align:center;display:none}
-
-/* ── APP SHELL ── */
-#app-shell{display:none;height:100vh;flex-direction:row}
-#app-shell.active{display:flex}
-
-/* ── SIDEBAR ── */
-.sidebar{
-  width:var(--sidebar);flex-shrink:0;
-  background:var(--midnight);color:#f0f4ff;
-  display:flex;flex-direction:column;
-  height:100vh;overflow:hidden;
-}
-.sidebar-logo{padding:20px 20px 16px;font-size:20px;font-weight:800;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
-.sidebar-logo span{color:var(--accent)}
-.sidebar-logo small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,.4);font-family:var(--mono);margin-top:2px}
-.nav-section{padding:16px 12px 8px;font-size:10px;font-weight:600;color:rgba(255,255,255,.3);letter-spacing:.12em;font-family:var(--mono);text-transform:uppercase}
-.nav-item{
-  display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
-  margin:1px 8px;cursor:pointer;font-size:14px;font-weight:500;
-  color:rgba(255,255,255,.6);transition:background .15s,color .15s;
-  border:none;background:none;width:calc(100% - 16px);text-align:left;
-}
-.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9)}
-.nav-item.active{background:rgba(79,195,247,.15);color:var(--signal)}
-.nav-item .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-.nav-badge{margin-left:auto;background:var(--signal);color:#0d1520;font-size:10px;font-weight:700;padding:2px 7px;border-radius:100px;font-family:var(--mono)}
-.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid rgba(255,255,255,.08)}
-.user-chip{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.5)}
-.user-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.logout-btn{margin-left:auto;font-size:11px;color:rgba(255,255,255,.3);cursor:pointer;background:none;border:none;font-family:var(--font)}
-.logout-btn:hover{color:rgba(255,255,255,.6)}
-
-/* ── MAIN ── */
-.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
-.topbar{
-  padding:16px 28px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  background:var(--surface);flex-shrink:0;position:sticky;top:0;z-index:10;
-}
-.topbar-title{font-size:18px;font-weight:700}
-.topbar-actions{display:flex;gap:10px;align-items:center}
-.content{padding:24px 28px;flex:1}
-
-/* ── BUTTONS ── */
-.btn{font-family:var(--font);font-size:13px;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
-.btn:hover{border-color:var(--border2);background:var(--surface2)}
-.btn-primary{background:var(--accent);color:#0d1520;border-color:var(--accent)}
-.btn-primary:hover{opacity:.88;background:var(--accent)}
-.btn-danger{background:var(--red-dim);color:var(--red);border-color:#fca5a5}
-.btn-danger:hover{background:#fee2e2}
-.btn-sm{font-size:12px;padding:5px 12px}
-
-/* ── STATS ROW ── */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
-.stat-label{font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:6px}
-.stat-val{font-size:28px;font-weight:800;letter-spacing:-1px}
-.stat-sub{font-size:12px;color:var(--muted);margin-top:4px}
-.stat-val.green{color:var(--green)}
-.stat-val.amber{color:var(--amber)}
-.stat-val.blue{color:var(--blue)}
-.stat-val.accent{color:var(--accent)}
-
-/* ── TABLE ── */
-.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.table-header h3{font-size:15px;font-weight:700}
-table{width:100%;border-collapse:collapse}
-th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface2)}
-td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr.clickable{cursor:pointer}
-tr.clickable:hover td{background:var(--surface2)}
-
-/* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;font-family:var(--mono)}
-.badge-new{background:#eff6ff;color:#2563eb}
-.badge-reviewing{background:var(--amber-dim);color:var(--amber)}
-.badge-building{background:var(--purple-dim);color:var(--purple)}
-.badge-demo_sent{background:#f0fdf4;color:#15803d}
-.badge-approved{background:#dcfce7;color:#166534}
-.badge-live{background:#bbf7d0;color:#14532d}
-.badge-cancelled{background:#f1f5f9;color:#64748b}
-
-/* ── DETAIL PANEL ── */
-.detail-panel{
-  position:fixed;top:0;right:0;bottom:0;width:640px;
-  background:var(--surface);border-left:1px solid var(--border);
-  display:flex;flex-direction:column;z-index:100;
-  transform:translateX(100%);transition:transform .3s ease;
-  box-shadow:-4px 0 24px rgba(0,0,0,.08);
-}
-.detail-panel.open{transform:translateX(0)}
-.panel-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
-.panel-title{font-size:18px;font-weight:700;margin-bottom:4px}
-.panel-ref{font-family:var(--mono);font-size:11px;color:var(--muted)}
-.panel-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);padding:4px;line-height:1}
-.panel-close:hover{color:var(--text)}
-.panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;padding:0 24px}
-.panel-tab{font-size:13px;font-weight:600;padding:12px 16px;border-bottom:2px solid transparent;cursor:pointer;color:var(--muted);background:none;border-left:none;border-right:none;border-top:none;font-family:var(--font);margin-bottom:-1px}
-.panel-tab.active{color:var(--text);border-bottom-color:var(--accent)}
-.panel-body{flex:1;overflow-y:auto;padding:24px}
-.panel-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0}
-
-/* ── DETAIL SECTIONS ── */
-.detail-section{margin-bottom:28px}
-.detail-section h4{font-size:12px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.info-item{background:var(--surface2);border-radius:8px;padding:12px 14px}
-.info-item .lbl{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px}
-.info-item .val{font-size:14px;font-weight:600;word-break:break-all}
-.info-item.full{grid-column:1/-1}
-
-/* ── TRANSCRIPT ── */
-.transcript{display:flex;flex-direction:column;gap:10px}
-.t-msg{display:flex;gap:8px;align-items:flex-start}
-.t-msg.customer{flex-direction:row-reverse}
-.t-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
-.t-avatar.ai{background:var(--accent-dim);color:var(--amber);border:1px solid rgba(232,166,40,.3)}
-.t-avatar.customer{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
-.t-bubble{max-width:80%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5}
-.t-msg.ai .t-bubble{background:var(--surface2);border:1px solid var(--border);border-radius:3px 12px 12px 12px}
-.t-msg.customer .t-bubble{background:var(--accent-dim);border:1px solid rgba(232,166,40,.2);border-radius:12px 3px 12px 12px}
-
-/* ── STATUS SELECT ── */
-.status-select{font-family:var(--font);font-size:13px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;outline:none}
-
-/* ── DEMO LINK ── */
-.demo-input-row{display:flex;gap:8px;margin-bottom:12px}
-.demo-input{flex:1;padding:10px 14px;border:1px solid var(--border2);border-radius:8px;font-family:var(--mono);font-size:13px;color:var(--text);background:var(--surface2);outline:none}
-.demo-input:focus{border-color:var(--accent)}
-
-/* ── NOTES ── */
-.notes-area{width:100%;min-height:100px;padding:12px 14px;border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface2);outline:none;resize:vertical;line-height:1.6}
-.notes-area:focus{border-color:var(--accent)}
-
-/* ── VERSION LIST ── */
-.version-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.version-num{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:600}
-.version-info{font-size:13px;color:var(--muted)}
-
-/* ── DRIP CAMPAIGN ── */
-.drip-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
-.drip-item:last-child{border-bottom:none}
-.drip-status{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.drip-status.sent{background:var(--green)}
-.drip-status.pending{background:var(--border2)}
-.drip-status.scheduled{background:var(--amber)}
-.drip-info{flex:1}
-.drip-name{font-size:13px;font-weight:600}
-.drip-date{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px}
-
-/* ── CUSTOMERS PAGE ── */
-.customer-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:border-color .15s}
-.customer-card:hover{border-color:var(--border2)}
-.customer-initials{width:44px;height:44px;border-radius:50%;background:var(--accent-dim);color:var(--amber);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.customer-info{flex:1}
-.customer-name{font-size:15px;font-weight:700}
-.customer-meta{font-size:12px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
-.customer-stats{display:flex;gap:16px;text-align:right}
-.cstat{font-size:12px;color:var(--muted)}
-.cstat strong{display:block;font-size:16px;font-weight:700;color:var(--text)}
-
-/* ── EMPTY STATE ── */
-.empty{text-align:center;padding:60px 20px;color:var(--muted)}
-.empty-icon{font-size:40px;margin-bottom:12px}
-.empty h3{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
-.empty p{font-size:14px}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#f0ece4;padding:12px 20px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:0.04}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 48px;border-bottom:1px solid transparent;transition:border-color .3s,background .3s}
+nav.scrolled{background:rgba(13,15,26,.95);border-color:var(--border);backdrop-filter:blur(12px)}
+.logo{font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--text);display:flex;align-items:center}
+.logo span{color:var(--accent)}
+.logo-icon{width:28px;height:28px;flex-shrink:0}
+.nav-pill{font-size:13px;font-weight:600;letter-spacing:.04em;padding:9px 20px;border-radius:100px;background:var(--accent);color:#0d0f1a;cursor:pointer;border:none;transition:transform .15s,opacity .15s}
+.nav-pill:hover{opacity:.85;transform:scale(1.02)}
+#hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 48px 80px;text-align:center;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(79,195,247,.08) 0%,transparent 70%)}
+.hero-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--accent);text-transform:uppercase;margin-bottom:28px;display:flex;align-items:center;gap:8px}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';flex:1;max-width:40px;height:1px;background:var(--accent);opacity:.4}
+h1{font-size:clamp(52px,7vw,96px);font-weight:800;line-height:.95;letter-spacing:-3px;margin-bottom:32px}
+h1 .serif{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--accent)}
+.hero-sub{font-size:18px;color:var(--muted);max-width:520px;line-height:1.6;margin-bottom:56px;font-weight:400}
+.cta-big{font-size:17px;font-weight:700;letter-spacing:.02em;padding:18px 48px;border-radius:100px;background:var(--accent);color:#0d0f1a;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.cta-big::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 50%)}
+.cta-big:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(79,195,247,.25)}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:900px;width:100%;margin:80px auto 0}
+.step{background:var(--surface);border:1px solid var(--border);padding:28px 24px;position:relative;transition:border-color .2s}
+.step:first-child{border-radius:var(--radius) 0 0 var(--radius)}
+.step:last-child{border-radius:0 var(--radius) var(--radius) 0}
+.step-num{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em;margin-bottom:12px}
+.step-title{font-size:15px;font-weight:700;margin-bottom:6px}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.step::after{content:'→';position:absolute;right:-14px;top:50%;transform:translateY(-50%);color:var(--accent);font-size:16px;z-index:1}
+.step:last-child::after{display:none}
+section{max-width:840px;margin:0 auto;padding:80px 48px}
+.section-label{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:24px}
+.section-title{font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.section-sub{font-size:15px;color:var(--muted);margin-bottom:40px;line-height:1.6}
+.progress-track{height:3px;background:var(--surface2);border-radius:2px;margin-bottom:48px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .5s ease;width:0%}
+.contact-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:32px}
+.contact-card h3{font-size:18px;font-weight:700;margin-bottom:6px}
+.contact-card p{font-size:14px;color:var(--muted);margin-bottom:24px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.05em;font-family:var(--mono)}
+.form-group input{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 16px;font-family:var(--font);font-size:15px;color:var(--text);outline:none;transition:border-color .2s}
+.form-group input::placeholder{color:var(--muted)}
+.form-group input:focus{border-color:rgba(232,166,40,.5)}
+.chat-area{display:flex;flex-direction:column;gap:16px;min-height:200px;margin-bottom:32px}
+.msg{display:flex;gap:12px;align-items:flex-start;animation:fadeUp .4s ease forwards;opacity:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.user{flex-direction:row-reverse}
+.avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.avatar.ai{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(232,166,40,.3)}
+.avatar.human{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.bubble{max-width:75%;padding:14px 18px;border-radius:16px;font-size:15px;line-height:1.6}
+.msg.ai .bubble{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:4px 16px 16px 16px}
+.msg.user .bubble{background:var(--accent-dim);border:1px solid rgba(232,166,40,.25);color:var(--text);border-radius:16px 4px 16px 16px}
+.typing{display:flex;gap:4px;align-items:center;padding:14px 18px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.4;animation:blink 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.input-row{display:flex;gap:12px;align-items:flex-end}
+textarea.chat-input{flex:1;resize:none;background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:14px 18px;font-family:var(--font);font-size:15px;color:var(--text);outline:none;line-height:1.5;min-height:52px;max-height:180px;transition:border-color .2s}
+textarea.chat-input::placeholder{color:var(--muted)}
+textarea.chat-input:focus{border-color:rgba(232,166,40,.5)}
+.send-btn{width:52px;height:52px;border-radius:12px;border:none;background:var(--accent);color:#0d0f1a;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,opacity .15s;flex-shrink:0}
+.send-btn:hover{opacity:.85;transform:scale(1.05)}
+.send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:24px}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(79,195,247,.04)}
+.file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.file-chip{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--mono)}
+.file-chip .file-name{flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-chip .remove{color:var(--muted);cursor:pointer;font-size:16px;line-height:1}
+.file-chip .remove:hover{color:var(--red)}
+.quick-replies{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.qr-chip{font-size:13px;padding:7px 14px;border-radius:100px;border:1px solid var(--border2);color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;background:transparent;font-family:var(--font)}
+.qr-chip:hover{border-color:var(--accent);color:var(--accent);background:rgba(79,195,247,.05)}
+.action-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.btn-ghost{font-size:13px;font-weight:600;padding:10px 20px;border-radius:8px;border:1px solid var(--border2);color:var(--muted);cursor:pointer;background:transparent;font-family:var(--font);transition:color .15s}
+.btn-ghost:hover{color:var(--text)}
+.btn-accent{font-size:13px;font-weight:700;padding:10px 24px;border-radius:8px;border:none;background:var(--accent);color:#0d0f1a;cursor:pointer;font-family:var(--font);transition:opacity .15s,transform .15s}
+.btn-accent:hover{opacity:.85;transform:scale(1.02)}
+.quote-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px;margin:32px 0;position:relative;overflow:hidden}
+.quote-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4FC3F7,#81d4fa)}
+.quote-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}
+.quote-label{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em;margin-bottom:6px}
+.quote-project{font-size:20px;font-weight:700}
+.quote-id{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px}
+.qstat{background:var(--surface2);border-radius:10px;padding:20px}
+.qstat-label{font-size:12px;color:var(--muted);margin-bottom:4px;font-family:var(--mono)}
+.qstat-val{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.qstat-val.accent{color:var(--accent)}
+.qstat-sub{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+.breakdown-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:14px}
+.breakdown-row:last-child{border-bottom:none}
+.breakdown-row .lbl{color:var(--muted)}
+.breakdown-row .val{font-weight:600;font-family:var(--mono)}
+.breakdown-row.total .lbl{color:var(--text);font-weight:700}
+.breakdown-row.total .val{color:var(--accent);font-size:18px}
+.wyg-title{font-size:14px;font-weight:700;margin-bottom:12px}
+.wyg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:32px}
+.wyg-item{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted)}
+.wyg-item::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+.proceed-btn{width:100%;padding:20px;border-radius:14px;border:none;background:var(--accent);color:#0d0f1a;font-family:var(--font);font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 24px rgba(79,195,247,.2)}
+.proceed-btn:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(79,195,247,.3)}
+.proceed-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.saving-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(10,10,10,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.saving-overlay.active{display:flex}
+.saving-spinner{width:48px;height:48px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.saving-text{font-size:15px;color:var(--muted);font-family:var(--mono)}
+#submitted{display:none;text-align:center;padding:80px 48px}
+#submitted.active{display:block}
+.success-ring{width:80px;height:80px;border-radius:50%;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 24px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(79,195,247,.3)}50%{box-shadow:0 0 0 16px rgba(79,195,247,0)}}
+.success-title{font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+.success-sub{font-size:16px;color:var(--muted);line-height:1.7;max-width:480px;margin:0 auto 32px}
+.ref-box{display:inline-block;font-family:var(--mono);font-size:14px;padding:12px 24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;letter-spacing:.05em;color:var(--accent)}
+.next-steps{max-width:480px;margin:40px auto 0;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px}
+.next-steps h4{font-size:12px;font-weight:600;margin-bottom:16px;color:var(--muted);font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.ns-item{display:flex;gap:12px;font-size:14px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.ns-item:last-child{margin-bottom:0}
+.ns-dot{width:20px;height:20px;border-radius:50%;background:var(--accent-dim);border:1px solid rgba(232,166,40,.3);color:var(--accent);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--red);color:white;padding:12px 24px;border-radius:8px;font-size:14px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
-.toast.success{background:var(--green)}
-.toast.error{background:var(--red)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-/* ── OVERLAY ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99;display:none}
-.overlay.show{display:block}
+/* ── LANDING SECTIONS ── */
+.landing-section{padding:100px 48px;max-width:1100px;margin:0 auto}
+.landing-section.full{max-width:100%;padding:100px 0}
+.section-tag{font-family:var(--mono);font-size:11px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section-tag::before{content:'';width:24px;height:1px;background:var(--accent);opacity:.5}
+.landing-h2{font-size:clamp(36px,4vw,56px);font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:16px}
+.landing-h2 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--accent)}
+.landing-sub{font-size:17px;color:var(--muted);line-height:1.7;max-width:560px}
+.divider-line{height:1px;background:var(--border);margin:0 48px}
 
-/* ── SEARCH ── */
-.search-input{padding:8px 14px;border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface2);outline:none;width:220px}
-.search-input:focus{border-color:var(--accent)}
+/* ── HOW IT WORKS EXPANDED ── */
+.hiw-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;margin-top:56px}
+.hiw-card{background:var(--surface);border:1px solid var(--border);padding:36px;position:relative;transition:border-color .2s}
+.hiw-card:hover{border-color:var(--border2)}
+.hiw-card:nth-child(1){border-radius:var(--radius) 0 0 0}
+.hiw-card:nth-child(2){border-radius:0 var(--radius) 0 0}
+.hiw-card:nth-child(3){border-radius:0 0 0 var(--radius)}
+.hiw-card:nth-child(4){border-radius:0 0 var(--radius) 0}
+.hiw-num{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em;margin-bottom:16px}
+.hiw-title{font-size:20px;font-weight:700;margin-bottom:10px}
+.hiw-desc{font-size:14px;color:var(--muted);line-height:1.7}
+.hiw-detail{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.hiw-detail-item{display:flex;gap:8px;font-size:13px;color:var(--muted)}
+.hiw-detail-item::before{content:'→';color:var(--accent);flex-shrink:0}
 
-/* ── KPI GRID ── */
-.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
-.kpi-label{font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:8px}
-.kpi-val{font-size:24px;font-weight:800;letter-spacing:-.5px}
-.kpi-bar{height:4px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden}
-.kpi-bar-fill{height:100%;background:var(--signal);border-radius:2px}
+/* ── PRICING MODEL ── */
+.pricing-model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.pm-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;position:relative;overflow:hidden}
+.pm-card.featured{border-color:rgba(79,195,247,.3);background:rgba(79,195,247,.04)}
+.pm-card.featured::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent)}
+.pm-icon{font-size:28px;margin-bottom:16px}
+.pm-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.pm-desc{font-size:13px;color:var(--muted);line-height:1.6}
 
-@media(max-width:900px){
-  .sidebar{width:60px}
-  .nav-item span,.sidebar-logo small,.nav-section,.user-chip .email,.logout-btn{display:none}
-  .sidebar-logo{padding:16px;text-align:center}
-  .detail-panel{width:100%}
-  .stats-row{grid-template-columns:1fr 1fr}
+/* ── FOUNDING 50 ── */
+.founding-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:80px 48px;text-align:center}
+.founding-counter{font-size:clamp(64px,10vw,120px);font-weight:800;letter-spacing:-4px;color:var(--accent);line-height:1;margin:24px 0 8px;font-family:var(--mono)}
+.founding-label{font-size:16px;color:var(--muted);margin-bottom:32px}
+.founding-bar-track{height:6px;background:var(--surface2);border-radius:3px;max-width:400px;margin:0 auto 32px;overflow:hidden}
+.founding-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width 1s ease}
+.founding-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.2);border-radius:100px;padding:8px 20px;font-size:13px;color:var(--accent);font-family:var(--mono);margin-bottom:24px}
+
+/* ── PORTFOLIO ── */
+.portfolio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
+.portfolio-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;font-family:var(--mono);cursor:pointer;transition:border-color .2s;position:relative}
+.portfolio-card:hover{border-color:var(--border2)}
+.portfolio-placeholder{text-align:center}
+.portfolio-placeholder .icon{font-size:32px;margin-bottom:8px;opacity:.3}
+
+/* ── CONTACT ── */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:64px;margin-top:48px;align-items:start}
+.contact-info h3{font-size:24px;font-weight:700;margin-bottom:16px}
+.contact-info p{font-size:15px;color:var(--muted);line-height:1.7;margin-bottom:24px}
+.contact-detail{display:flex;gap:12px;align-items:center;font-size:14px;color:var(--muted);margin-bottom:12px}
+.contact-detail a{color:var(--accent);text-decoration:none}
+.contact-detail a:hover{text-decoration:underline}
+.contact-form-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px}
+.contact-form-card h3{font-size:18px;font-weight:700;margin-bottom:6px}
+.contact-form-card p{font-size:13px;color:var(--muted);margin-bottom:24px}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.cf-group{display:flex;flex-direction:column;gap:6px}
+.cf-group label{font-size:11px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.05em}
+.cf-group input,.cf-group textarea,.cf-group select{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:11px 14px;font-family:var(--font);font-size:14px;color:var(--text);outline:none;transition:border-color .2s;width:100%}
+.cf-group textarea{min-height:100px;resize:vertical;line-height:1.5}
+.cf-group input:focus,.cf-group textarea:focus,.cf-group select:focus{border-color:rgba(79,195,247,.5)}
+.cf-group input::placeholder,.cf-group textarea::placeholder{color:var(--muted)}
+.cf-submit{width:100%;padding:13px;border-radius:10px;border:none;background:var(--accent);color:#0d0f1a;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .15s;margin-top:4px}
+.cf-submit:hover{opacity:.88;transform:translateY(-1px)}
+.cf-success{display:none;text-align:center;padding:24px;color:var(--green);font-weight:600}
+
+/* ── FOOTER ── */
+footer{background:var(--midnight);border-top:1px solid rgba(255,255,255,.06);padding:40px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-logo{font-size:16px;font-weight:800;color:#f0f4ff;display:flex;align-items:center;gap:8px}
+.footer-logo span{color:var(--accent)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{font-size:12px;color:rgba(255,255,255,.4);text-decoration:none;transition:color .15s}
+.footer-links a:hover{color:rgba(255,255,255,.8)}
+.footer-copy{font-size:12px;color:rgba(255,255,255,.25);font-family:var(--mono)}
+
+/* ── NAV LINKS ── */
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-link{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;transition:color .15s}
+.nav-link:hover{color:var(--text)}
+
+@media(max-width:768px){
+  .landing-section{padding:60px 20px}
+  .hiw-grid{grid-template-columns:1fr}
+  .hiw-card:nth-child(n){border-radius:var(--radius)}
+  .pricing-model-grid{grid-template-columns:1fr}
+  .portfolio-grid{grid-template-columns:1fr 1fr}
+  .contact-grid{grid-template-columns:1fr;gap:32px}
+  .cf-row{grid-template-columns:1fr}
+  footer{flex-direction:column;text-align:center}
+  .footer-links{flex-wrap:wrap;justify-content:center}
+  .divider-line{margin:0 20px}
+  .nav-links{display:none}
 }
+@media(max-width:640px){nav{padding:16px 20px}#hero{padding:100px 20px 60px}.steps{grid-template-columns:1fr 1fr;gap:2px}.step:nth-child(2)::after{display:none}.step:nth-child(2){border-radius:0 var(--radius) 0 0}.step:nth-child(3){border-radius:0 0 0 var(--radius)}.step:last-child{border-radius:0 0 var(--radius) 0}section{padding:60px 20px}.quote-grid{grid-template-columns:1fr}.quote-header{flex-direction:column;gap:8px}.form-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
+<div class="saving-overlay" id="saving-overlay">
+  <div class="saving-spinner"></div>
+  <div class="saving-text">Saving your project...</div>
+</div>
 <div class="toast" id="toast"></div>
-<div class="overlay" id="overlay" onclick="closePanel()"></div>
 
-<!-- LOGIN -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" height="36">
-        <rect width="280" height="64" rx="12" fill="#1A1A2E"/>
-        <rect x="8" y="8" width="48" height="48" rx="10" fill="#4FC3F7"/>
-        <path d="M26 20 L26 36 Q26 44 34 44 L42 44" stroke="#1A1A2E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <circle cx="26" cy="20" r="3" fill="#1A1A2E"/>
-        <text x="68" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">A</text>
-        <text x="92" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">I</text>
-        <text x="110" y="46" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#1A1A2E" letter-spacing="-2">nkle</text>
-      </svg>
-    </div>
-    <div class="login-sub">Employee dashboard — sign in to continue</div>
-    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@aiai.app" autocomplete="email"/></div>
-    <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
-    <button class="login-btn" onclick="doLogin()">Sign in</button>
-    <div class="login-error" id="login-error"></div>
+<nav id="navbar">
+  <div class="logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" height="32">
+      <rect width="280" height="64" rx="12" fill="#1A1A2E"/>
+      <rect x="8" y="8" width="48" height="48" rx="10" fill="#4FC3F7"/>
+      <path d="M26 20 L26 36 Q26 44 34 44 L42 44" stroke="#1A1A2E" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="26" cy="20" r="3" fill="#1A1A2E"/>
+      <text x="68" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">A</text>
+      <text x="92" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">I</text>
+      <text x="110" y="46" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff" letter-spacing="-2">nkle</text>
+    </svg>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="#how-it-works">How it works</a>
+    <a class="nav-link" href="#pricing">Pricing</a>
+    <a class="nav-link" href="#contact">Contact</a>
+  </div>
+  <button class="nav-pill" onclick="startApp()">Get started</button>
+</nav>
+
+<div id="hero">
+  <div class="hero-eyebrow">Custom apps, built by AI</div>
+  <h1>Your app.<br/><span class="serif">Built</span> by AI.</h1>
+  <p class="hero-sub">We've learned AI so you don't have to. Describe the tool you wish existed and we'll build it — fast, affordable, no dev team needed.</p>
+  <button class="cta-big" onclick="startApp()">✦ Get started — it's free</button>
+  <div class="steps">
+    <div class="step"><div class="step-num">01</div><div class="step-title">Describe it</div><div class="step-desc">Tell us what you need in plain English</div></div>
+    <div class="step"><div class="step-num">02</div><div class="step-title">Get a quote</div><div class="step-desc">AI analyzes your needs, transparent pricing</div></div>
+    <div class="step"><div class="step-num">03</div><div class="step-title">Get an MVP</div><div class="step-desc">Working prototype built for your review</div></div>
+    <div class="step"><div class="step-num">04</div><div class="step-title">Approve &amp; launch</div><div class="step-desc">Approve it, we host it. You're live.</div></div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app-shell">
+<!-- ── IDEAS → APPS ANIMATION ── -->
+<div class="divider-line"></div>
+<div style="background:var(--surface);padding:80px 48px;text-align:center;overflow:hidden" id="how-it-works">
+  <div class="section-tag" style="justify-content:center">The magic</div>
+  <div class="landing-h2" style="text-align:center;margin-bottom:8px">Your idea. <em>Our AI.</em> Real software.</div>
+  <div class="landing-sub" style="margin:0 auto 56px;text-align:center">We've learned AI so you don't have to. Describe what you need and watch it become a working app.</div>
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sidebar-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" height="28">
-      <rect x="0" y="8" width="48" height="48" rx="10" fill="#1A1A2E"/>
-      <path d="M18 20 L18 36 Q18 44 26 44 L34 44" stroke="#4FC3F7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <circle cx="18" cy="20" r="3" fill="#4FC3F7"/>
-      <text x="58" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">A</text>
-      <text x="82" y="46" font-family="Georgia, serif" font-size="38" font-weight="700" fill="#4FC3F7" letter-spacing="-1">I</text>
-      <text x="100" y="46" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#ffffff" letter-spacing="-2">nkle</text>
+  <!-- ANIMATED SVG -->
+  <div style="max-width:800px;margin:0 auto;position:relative">
+    <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+      <!-- Ideas coming in -->
+      <g class="idea-group-1">
+        <circle cx="60" cy="60" r="28" fill="#1a1e2e" stroke="#4FC3F7" stroke-width="1.5" opacity="0.9">
+          <animate attributeName="cx" values="60;180" dur="3s" repeatCount="indefinite" begin="0s"/>
+          <animate attributeName="opacity" values="0.9;0" dur="3s" repeatCount="indefinite" begin="0s"/>
+        </circle>
+        <text x="60" y="65" text-anchor="middle" font-size="18" fill="#4FC3F7">
+          💡
+          <animate attributeName="x" values="60;180" dur="3s" repeatCount="indefinite" begin="0s"/>
+          <animate attributeName="opacity" values="1;0" dur="3s" repeatCount="indefinite" begin="0s"/>
+        </text>
+        <text x="60" y="105" text-anchor="middle" font-size="9" fill="#6b7494" font-family="monospace">
+          "I need a tracker"
+          <animate attributeName="x" values="60;180" dur="3s" repeatCount="indefinite" begin="0s"/>
+          <animate attributeName="opacity" values="0.8;0" dur="3s" repeatCount="indefinite" begin="0s"/>
+        </text>
+      </g>
+
+      <g class="idea-group-2">
+        <circle cx="60" cy="140" r="28" fill="#1a1e2e" stroke="#4FC3F7" stroke-width="1.5" opacity="0">
+          <animate attributeName="cx" values="60;180" dur="3s" repeatCount="indefinite" begin="1s"/>
+          <animate attributeName="opacity" values="0;0.9;0" dur="3s" repeatCount="indefinite" begin="1s"/>
+        </circle>
+        <text x="60" y="145" text-anchor="middle" font-size="18" fill="#4FC3F7" opacity="0">
+          🧠
+          <animate attributeName="x" values="60;180" dur="3s" repeatCount="indefinite" begin="1s"/>
+          <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" begin="1s"/>
+        </text>
+        <text x="60" y="185" text-anchor="middle" font-size="9" fill="#6b7494" font-family="monospace" opacity="0">
+          "An invoice tool"
+          <animate attributeName="x" values="60;180" dur="3s" repeatCount="indefinite" begin="1s"/>
+          <animate attributeName="opacity" values="0;0.8;0" dur="3s" repeatCount="indefinite" begin="1s"/>
+        </text>
+      </g>
+
+      <g class="idea-group-3">
+        <circle cx="60" cy="100" r="28" fill="#1a1e2e" stroke="#4FC3F7" stroke-width="1.5" opacity="0">
+          <animate attributeName="cx" values="60;180" dur="3s" repeatCount="indefinite" begin="2s"/>
+          <animate attributeName="opacity" values="0;0.9;0" dur="3s" repeatCount="indefinite" begin="2s"/>
+        </circle>
+        <text x="60" y="105" text-anchor="middle" font-size="18" fill="#4FC3F7" opacity="0">
+          ✨
+          <animate attributeName="x" values="60;180" dur="3s" repeatCount="indefinite" begin="2s"/>
+          <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" begin="2s"/>
+        </text>
+        <text x="60" y="145" text-anchor="middle" font-size="9" fill="#6b7494" font-family="monospace" opacity="0">
+          "A client portal"
+          <animate attributeName="x" values="60;180" dur="3s" repeatCount="indefinite" begin="2s"/>
+          <animate attributeName="opacity" values="0;0.8;0" dur="3s" repeatCount="indefinite" begin="2s"/>
+        </text>
+      </g>
+
+      <!-- The box / AI engine -->
+      <rect x="200" y="40" width="180" height="120" rx="16" fill="#1A1A2E" stroke="#4FC3F7" stroke-width="2"/>
+      <text x="290" y="88" text-anchor="middle" font-size="28" fill="#4FC3F7">🤖</text>
+      <text x="290" y="115" text-anchor="middle" font-size="11" fill="#4FC3F7" font-family="monospace" font-weight="bold">AINKLE AI</text>
+      <text x="290" y="132" text-anchor="middle" font-size="9" fill="#6b7494" font-family="monospace">building...</text>
+      <!-- Pulse ring -->
+      <circle cx="290" cy="100" r="65" fill="none" stroke="#4FC3F7" stroke-width="1" opacity="0.15">
+        <animate attributeName="r" values="65;80" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.15;0" dur="2s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Apps coming out -->
+      <g>
+        <rect x="420" y="32" width="80" height="56" rx="10" fill="#1a1e2e" stroke="#4FC3F7" stroke-width="1.5" opacity="0">
+          <animate attributeName="x" values="380;500" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+          <animate attributeName="opacity" values="0;0.9;0.9;0" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+        </rect>
+        <text x="460" y="58" text-anchor="middle" font-size="18" fill="#4FC3F7" opacity="0">
+          📊
+          <animate attributeName="x" values="420;540" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+        </text>
+        <text x="460" y="100" text-anchor="middle" font-size="9" fill="#4ecb71" font-family="monospace" font-weight="bold" opacity="0">
+          ✓ Dashboard
+          <animate attributeName="x" values="420;540" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+        </text>
+      </g>
+
+      <g>
+        <rect x="420" y="110" width="80" height="56" rx="10" fill="#1a1e2e" stroke="#4FC3F7" stroke-width="1.5" opacity="0">
+          <animate attributeName="x" values="380;520" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+          <animate attributeName="opacity" values="0;0.9;0.9;0" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+        </rect>
+        <text x="460" y="136" text-anchor="middle" font-size="18" fill="#4FC3F7" opacity="0">
+          🗂️
+          <animate attributeName="x" values="420;560" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+        </text>
+        <text x="460" y="178" text-anchor="middle" font-size="9" fill="#4ecb71" font-family="monospace" font-weight="bold" opacity="0">
+          ✓ CRM Tool
+          <animate attributeName="x" values="420;560" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+        </text>
+      </g>
+
+      <g>
+        <rect x="420" y="70" width="80" height="56" rx="10" fill="#1a1e2e" stroke="#4FC3F7" stroke-width="1.5" opacity="0">
+          <animate attributeName="x" values="380;530" dur="3s" repeatCount="indefinite" begin="2.5s"/>
+          <animate attributeName="opacity" values="0;0.9;0.9;0" dur="3s" repeatCount="indefinite" begin="2.5s"/>
+        </rect>
+        <text x="460" y="96" text-anchor="middle" font-size="18" fill="#4FC3F7" opacity="0">
+          📋
+          <animate attributeName="x" values="420;550" dur="3s" repeatCount="indefinite" begin="2.5s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="2.5s"/>
+        </text>
+        <text x="460" y="138" text-anchor="middle" font-size="9" fill="#4ecb71" font-family="monospace" font-weight="bold" opacity="0">
+          ✓ Tracker
+          <animate attributeName="x" values="420;550" dur="3s" repeatCount="indefinite" begin="2.5s"/>
+          <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="2.5s"/>
+        </text>
+      </g>
+
+      <!-- Labels -->
+      <text x="60" y="195" text-anchor="middle" font-size="10" fill="#6b7494" font-family="monospace">Your ideas</text>
+      <text x="290" y="195" text-anchor="middle" font-size="10" fill="#6b7494" font-family="monospace">Ainkle AI</text>
+      <text x="510" y="195" text-anchor="middle" font-size="10" fill="#6b7494" font-family="monospace">Your app</text>
+
+      <!-- Arrows -->
+      <path d="M92 100 L195 100" stroke="#4FC3F7" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.4" marker-end="url(#arr)"/>
+      <path d="M383 100 L415 100" stroke="#4FC3F7" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.4" marker-end="url(#arr)"/>
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#4FC3F7" stroke-width="2"/>
+        </marker>
+      </defs>
     </svg>
   </div>
-    <div class="nav-section">Main</div>
-    <button class="nav-item active" onclick="showPage('queue',this)"><span class="icon">📥</span><span>Queue</span><span class="nav-badge" id="new-badge">0</span></button>
-    <button class="nav-item" onclick="showPage('customers',this)"><span class="icon">👥</span><span>Customers</span></button>
-    <button class="nav-item" onclick="showPage('versions',this)"><span class="icon">🔖</span><span>Versions</span></button>
-    <button class="nav-item" onclick="showPage('campaigns',this)"><span class="icon">📨</span><span>Campaigns</span></button>
-    <div class="nav-section">Insights</div>
-    <button class="nav-item" onclick="showPage('kpis',this)"><span class="icon">📊</span><span>KPIs</span></button>
-    <div class="nav-section">Settings</div>
-    <button class="nav-item" onclick="showPage('team',this)"><span class="icon">🔑</span><span>Team</span></button>
-    <div class="sidebar-footer">
-      <div class="user-chip">
-        <div class="user-avatar" id="user-avatar">--</div>
-        <span class="email" id="user-email" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-        <button class="logout-btn" onclick="doLogout()">Out</button>
+</div>
+
+<div class="divider-line"></div>
+
+<!-- ── HOW IT WORKS EXPANDED ── -->
+<div class="landing-section">
+  <div class="section-tag">The process</div>
+  <div class="landing-h2">Simple steps.<br/><em>Real results.</em></div>
+  <div class="landing-sub">No technical knowledge needed. No dev team required. Just tell us what you need.</div>
+  <div class="hiw-grid">
+    <div class="hiw-card">
+      <div class="hiw-num">01 — Describe</div>
+      <div class="hiw-title">Tell us what you need</div>
+      <div class="hiw-desc">Have a conversation with our AI consultant. Describe your idea in plain English — no jargon, no specs, no wireframes needed.</div>
+      <div class="hiw-detail">
+        <div class="hiw-detail-item">Takes 5-10 minutes</div>
+        <div class="hiw-detail-item">AI asks smart clarifying questions</div>
+        <div class="hiw-detail-item">Upload any existing docs or spreadsheets</div>
+      </div>
+    </div>
+    <div class="hiw-card">
+      <div class="hiw-num">02 — Quote</div>
+      <div class="hiw-title">Get an instant custom quote</div>
+      <div class="hiw-desc">Our AI analyzes your requirements and generates a transparent, itemized quote. No sales calls, no waiting, no surprises.</div>
+      <div class="hiw-detail">
+        <div class="hiw-detail-item">Instant — generated in seconds</div>
+        <div class="hiw-detail-item">One-time setup fee + monthly subscription</div>
+        <div class="hiw-detail-item">No payment until you approve</div>
+      </div>
+    </div>
+    <div class="hiw-card">
+      <div class="hiw-num">03 — Build</div>
+      <div class="hiw-title">We build your MVP</div>
+      <div class="hiw-desc">Our team uses AI to build your working app in days, not months. Every app goes through QA review before you ever see it.</div>
+      <div class="hiw-detail">
+        <div class="hiw-detail-item">Delivered in 3–5 business days</div>
+        <div class="hiw-detail-item">QA tested before delivery</div>
+        <div class="hiw-detail-item">Request revisions — we'll rebuild</div>
+      </div>
+    </div>
+    <div class="hiw-card">
+      <div class="hiw-num">04 — Launch</div>
+      <div class="hiw-title">Approve it, we host it</div>
+      <div class="hiw-desc">Review your app, approve it, and we get it live on your own URL. Ongoing support and updates included every month.</div>
+      <div class="hiw-detail">
+        <div class="hiw-detail-item">Your own URL with SSL</div>
+        <div class="hiw-detail-item">Monthly updates and support included</div>
+        <div class="hiw-detail-item">Cancel anytime, no contracts</div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- MAIN -->
-  <div class="main" id="main">
+<div class="divider-line"></div>
 
-    <!-- QUEUE PAGE -->
-    <div id="page-queue">
-      <div class="topbar">
-        <div class="topbar-title">Project Queue</div>
-        <div class="topbar-actions">
-          <input class="search-input" placeholder="Search projects…" id="queue-search" oninput="applyQueueFilters()"/>
-          <select class="status-select" id="filter-status" onchange="applyQueueFilters()" style="font-size:13px">
-            <option value="">All statuses</option>
-            <option value="new">New</option>
-            <option value="reviewing">Reviewing</option>
-            <option value="building">Building</option>
-            <option value="demo_sent">Demo Sent</option>
-            <option value="approved">Approved</option>
-            <option value="live">Live</option>
-            <option value="cancelled">Cancelled</option>
+<!-- ── PRICING MODEL ── -->
+<div class="landing-section" id="pricing">
+  <div class="section-tag">Pricing</div>
+  <div class="landing-h2">Transparent.<br/><em>Fair.</em> Custom.</div>
+  <div class="landing-sub">Every app is different, so every quote is custom. Our AI generates your price instantly based on what you actually need — no guessing, no negotiating.</div>
+  <div class="pricing-model-grid">
+    <div class="pm-card">
+      <div class="pm-icon">💬</div>
+      <div class="pm-title">Free consultation</div>
+      <div class="pm-desc">The entire consultation and quote process is completely free. No payment, no commitment, no credit card until you approve your app.</div>
+    </div>
+    <div class="pm-card featured">
+      <div class="pm-icon">🔨</div>
+      <div class="pm-title">One-time setup fee</div>
+      <div class="pm-desc">A single upfront fee covers the full build — design, development, QA review, and delivery. Your AI-generated quote tells you exactly what this costs before you commit.</div>
+    </div>
+    <div class="pm-card">
+      <div class="pm-icon">🔄</div>
+      <div class="pm-title">Monthly subscription</div>
+      <div class="pm-desc">Covers hosting, SSL, ongoing support, and updates. Cancel anytime — no long-term contracts. Your subscription starts only after you approve your app.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider-line"></div>
+
+<!-- ── FOUNDING 50 ── -->
+<div class="founding-section">
+  <div class="founding-tag">⭐ Limited time offer</div>
+  <div class="landing-h2" style="margin-bottom:8px">Founding <em>50</em></div>
+  <div class="landing-sub" style="margin:0 auto 24px;text-align:center">Be one of our first 50 customers and get your setup fee completely waived — forever. You only pay the monthly subscription.</div>
+  <div class="founding-counter" id="founding-remaining">--</div>
+  <div class="founding-label" id="founding-label">spots remaining</div>
+  <div class="founding-bar-track">
+    <div class="founding-bar-fill" id="founding-bar" style="width:0%"></div>
+  </div>
+  <button class="cta-big" onclick="startApp()" style="margin:0 auto">✦ Claim your spot — it's free</button>
+</div>
+
+<div class="divider-line"></div>
+
+<!-- ── PORTFOLIO ── -->
+<div class="landing-section">
+  <div class="section-tag">Our work</div>
+  <div class="landing-h2">Apps we've <em>built.</em></div>
+  <div class="landing-sub">Every app is custom built for the customer's specific needs. Here are some examples.</div>
+  <div class="portfolio-grid">
+    <div class="portfolio-card">
+      <div class="portfolio-placeholder">
+        <div class="icon">🖼️</div>
+        <div>Coming soon</div>
+      </div>
+    </div>
+    <div class="portfolio-card">
+      <div class="portfolio-placeholder">
+        <div class="icon">🖼️</div>
+        <div>Coming soon</div>
+      </div>
+    </div>
+    <div class="portfolio-card">
+      <div class="portfolio-placeholder">
+        <div class="icon">🖼️</div>
+        <div>Coming soon</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider-line"></div>
+
+<!-- ── CONTACT ── -->
+<div class="landing-section" id="contact">
+  <div class="section-tag">Get in touch</div>
+  <div class="landing-h2">Questions?<br/><em>We've got answers.</em></div>
+  <div class="contact-grid">
+    <div class="contact-info">
+      <p>Not ready to start a project yet? Have questions about pricing, what we build, or how it all works? Drop us a message and we'll get back to you within 1 business day.</p>
+      <div class="contact-detail">📧 <a href="mailto:hello@ainkle.com">hello@ainkle.com</a></div>
+      <div class="contact-detail">⚡ Or just <a href="#" onclick="startApp();return false">start the free consultation</a> — it takes 5 minutes</div>
+    </div>
+    <div class="contact-form-card">
+      <h3>Send a message</h3>
+      <p>We'll reply within 1 business day.</p>
+      <div id="contact-form-body">
+        <div class="cf-row">
+          <div class="cf-group"><label>Name</label><input type="text" id="cf-name" placeholder="Jane Smith"/></div>
+          <div class="cf-group"><label>Email</label><input type="email" id="cf-email" placeholder="jane@company.com"/></div>
+        </div>
+        <div class="cf-group" style="margin-bottom:14px"><label>Subject</label>
+          <select id="cf-subject">
+            <option value="">Select a topic...</option>
+            <option>General question</option>
+            <option>Pricing inquiry</option>
+            <option>What can you build?</option>
+            <option>Technical question</option>
+            <option>Partnership</option>
+            <option>Other</option>
           </select>
-          <select class="status-select" id="filter-complexity" onchange="applyQueueFilters()" style="font-size:13px">
-            <option value="">All complexity</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-          <button class="btn btn-sm" onclick="loadQueue()">↻ Refresh</button>
         </div>
+        <div class="cf-group" style="margin-bottom:14px"><label>Message</label><textarea id="cf-message" placeholder="Tell us what's on your mind..."></textarea></div>
+        <button class="cf-submit" onclick="submitContact()">Send message →</button>
       </div>
-      <div class="content">
-        <div class="stats-row" id="queue-stats"></div>
-        <div class="table-card">
-          <div class="table-header"><h3>All Projects</h3></div>
-          <table>
-            <thead><tr>
-              <th>Ref</th><th>Customer</th><th>Project</th><th>Quote</th><th>Status</th><th>Received</th><th>Demo Views</th>
-            </tr></thead>
-            <tbody id="queue-tbody"></tbody>
-          </table>
-        </div>
-      </div>
+      <div class="cf-success" id="cf-success">✓ Message sent! We'll be in touch soon.</div>
     </div>
-
-    <!-- CUSTOMERS PAGE -->
-    <div id="page-customers" style="display:none">
-      <div class="topbar">
-        <div class="topbar-title">Customers</div>
-        <div class="topbar-actions"><input class="search-input" placeholder="Search customers…" oninput="filterCustomers(this.value)"/></div>
-      </div>
-      <div class="content" id="customers-list"></div>
-    </div>
-
-    <!-- VERSIONS PAGE -->
-    <div id="page-versions" style="display:none">
-      <div class="topbar"><div class="topbar-title">Version History</div></div>
-      <div class="content">
-        <div class="kpi-grid" id="version-kpis"></div>
-        <div class="table-card">
-          <div class="table-header"><h3>All Versions</h3></div>
-          <table>
-            <thead><tr><th>Customer</th><th>Project</th><th>Version</th><th>Status</th><th>Date</th></tr></thead>
-            <tbody id="versions-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- CAMPAIGNS PAGE -->
-    <div id="page-campaigns" style="display:none">
-      <div class="topbar"><div class="topbar-title">Drip Campaigns</div></div>
-      <div class="content">
-        <div class="table-card">
-          <div class="table-header"><h3>Campaign Status by Customer</h3></div>
-          <table>
-            <thead><tr><th>Customer</th><th>Welcome</th><th>7-day</th><th>30-day</th><th>Survey</th><th>Actions</th></tr></thead>
-            <tbody id="campaigns-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- KPIS PAGE -->
-    <div id="page-kpis" style="display:none">
-      <div class="topbar"><div class="topbar-title">KPIs & Analytics</div></div>
-      <div class="content" id="kpis-content"></div>
-    </div>
-
-    <!-- TEAM PAGE -->
-    <div id="page-team" style="display:none">
-      <div class="topbar">
-        <div class="topbar-title">Team</div>
-        <div class="topbar-actions"><button class="btn btn-primary btn-sm" onclick="showInvite()">+ Invite member</button></div>
-      </div>
-      <div class="content">
-        <div class="table-card">
-          <div class="table-header"><h3>Team Members</h3></div>
-          <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
-            <tbody id="team-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /main -->
-</div><!-- /app-shell -->
-
-<!-- DETAIL PANEL -->
-<div class="detail-panel" id="detail-panel">
-  <div class="panel-header">
-    <div>
-      <div class="panel-title" id="panel-title">Project Name</div>
-      <div class="panel-ref" id="panel-ref">ANK-XXXX</div>
-    </div>
-    <button class="panel-close" onclick="closePanel()">×</button>
   </div>
-  <div class="panel-tabs">
-    <button class="panel-tab active" onclick="switchTab('overview',this)">Overview</button>
-    <button class="panel-tab" onclick="switchTab('transcript',this)">Transcript</button>
-    <button class="panel-tab" onclick="switchTab('demo',this)">Demo & Links</button>
-    <button class="panel-tab" onclick="switchTab('drip',this)">Campaign</button>
-    <button class="panel-tab" onclick="switchTab('versions',this)">Versions</button>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-logo">
+    <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+      <rect width="48" height="48" rx="12" fill="#1A1A2E"/>
+      <path d="M18 12 L18 28 Q18 36 26 36 L34 36" stroke="#4FC3F7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <circle cx="18" cy="12" r="3" fill="#4FC3F7"/>
+    </svg>
+    <span style="color:#4FC3F7">AI</span>nkle
   </div>
-  <div class="panel-body" id="panel-body"></div>
-  <div class="panel-footer">
-    <select class="status-select" id="status-select" onchange="updateStatus(this.value)">
-      <option value="new">New</option>
-      <option value="reviewing">Reviewing</option>
-      <option value="building">Building</option>
-      <option value="demo_sent">Demo Sent</option>
-      <option value="approved">Approved</option>
-      <option value="live">Live</option>
-      <option value="cancelled">Cancelled</option>
-    </select>
-    <button class="btn btn-primary" onclick="saveNotes()">Save notes</button>
-    <button class="btn" onclick="sendDemoEmail()" id="send-demo-btn">📤 Send demo</button>
-    <button class="btn" onclick="generatePackage()" style="background:var(--accent-dim);border-color:var(--accent);color:var(--amber);font-weight:700" title="Download Claude Code build brief">📦 Build package</button>
+  <div class="footer-links">
+    <a href="#how-it-works">How it works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#contact">Contact</a>
+    <a href="#">Privacy policy</a>
+    <a href="#">Terms of service</a>
   </div>
+  <div class="footer-copy">© 2026 Ainkle. All rights reserved.</div>
+</footer>
+
+<div id="app" style="display:none">
+<section>
+  <div class="section-label">Consultation</div>
+  <div class="section-title" id="app-title">Let's build something</div>
+  <div class="section-sub" id="app-sub">First, tell us a little about yourself. Then our AI consultant takes it from there.</div>
+  <div class="progress-track"><div class="progress-fill" id="progress"></div></div>
+
+  <!-- CONTACT -->
+  <div class="contact-card" id="contact-form">
+    <h3>Before we start</h3>
+    <p>We'll use this to send your quote and MVP preview link.</p>
+    <div class="form-row">
+      <div class="form-group"><label>Your name *</label><input type="text" id="input-name" placeholder="Jane Smith" autocomplete="name"/></div>
+      <div class="form-group"><label>Email address *</label><input type="email" id="input-email" placeholder="jane@company.com" autocomplete="email"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Phone (optional)</label><input type="tel" id="input-phone" placeholder="+1 (555) 000-0000" autocomplete="tel"/></div>
+      <div class="form-group"><label>Company (optional)</label><input type="text" id="input-company" placeholder="Acme Inc."/></div>
+    </div>
+    <div class="action-row" style="margin-top:8px">
+      <button class="btn-accent" onclick="submitContact()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat-section" style="display:none">
+    <div class="chat-area" id="chat"></div>
+    <div id="quick-replies-area"></div>
+
+    <div id="input-area">
+      <div class="input-row">
+        <textarea class="chat-input" id="user-input" rows="1" placeholder="Type your message…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="action-row" id="action-row"></div>
+    </div>
+
+    <div id="upload-area" style="display:none">
+      <div class="upload-zone" id="drop-zone" onclick="triggerUpload()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+        <div style="font-size:28px;margin-bottom:8px">📎</div>
+        <div style="font-size:14px;color:var(--muted)"><strong style="color:var(--text)">Click to upload</strong> or drag &amp; drop</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">PDF, Word, Excel, CSV, images</div>
+        <div class="file-list" id="file-list"></div>
+      </div>
+      <input type="file" id="file-input" style="display:none" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg" onchange="handleFiles(this.files)"/>
+      <div class="action-row">
+        <button class="btn-ghost" onclick="skipUpload()">Skip — no files to share</button>
+        <button class="btn-accent" id="continue-upload" style="display:none" onclick="afterUpload()">Continue with files →</button>
+      </div>
+    </div>
+
+    <div id="quote-area" style="display:none"></div>
+  </div>
+</section>
+</div>
+
+<div id="submitted">
+  <div class="success-ring">🤖</div>
+  <div class="success-title">You're in the queue.</div>
+  <div class="success-sub">Our team has your brief and will have a working prototype ready for your review within 3–5 business days. We'll email you at <strong id="confirm-email"></strong> when it's ready.</div>
+  <div class="ref-box" id="ref-code">ANK-XXXX</div>
+  <div class="next-steps">
+    <h4>What happens next</h4>
+    <div class="ns-item"><div class="ns-dot">1</div><span>Our team reviews your brief and confirms the quote by email within 1 business day</span></div>
+    <div class="ns-item"><div class="ns-dot">2</div><span>We build your MVP — a fully working version of your app</span></div>
+    <div class="ns-item"><div class="ns-dot">3</div><span>Your app is sent to our QA auditor for testing and final review before you ever see it</span></div>
+    <div class="ns-item"><div class="ns-dot">4</div><span>You get a private link to review, test, and approve</span></div>
+    <div class="ns-item"><div class="ns-dot">5</div><span>Once approved, we launch it live on your own URL</span></div>
+  </div>
+  <div style="margin-top:40px"><button class="btn-ghost" onclick="location.reload()">← Start a new project</button></div>
 </div>
 
 <script>
-const SUPABASE_URL='https://qunchnutxjbaxesajszm.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM';
-const CLOUDFLARE_WORKER='https://aiai-proxy.aiai-admin.workers.dev/';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SUPABASE_URL = 'https://qunchnutxjbaxesajszm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM';
+const EDGE_FN_URL  = 'https://aiai-proxy.aiai-admin.workers.dev/';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentProject=null;
-let allProjects=[];
-let currentTab='overview';
+const state = {
+  phase: 0, messages: [],
+  customer: {name:'',email:'',phone:'',company:''},
+  uploadedFiles: [], quote: null, refId: null
+};
 
-// ── AUTH ──
-async function doLogin(){
-  const email=document.getElementById('login-email').value.trim();
-  const pass=document.getElementById('login-pass').value;
-  const err=document.getElementById('login-error');
-  err.style.display='none';
-  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){err.textContent=error.message;err.style.display='block';return}
-  initApp(data.user);
+const SYSTEM_PROMPT = `You are Ainkle's expert AI consultant. Ainkle is a company that uses AI to build custom software apps for businesses — fast and affordably. Your job: understand what the customer needs, ask smart clarifying questions, then produce an accurate project assessment and quote.
+
+PERSONALITY: Warm, expert, direct. No fluff. You're a senior product consultant who has built hundreds of apps. Ask 2-3 targeted questions at a time max. Be conversational — weave questions together, never list them numerically.
+
+WHAT AINKLE BUILDS: Custom web apps — dashboards, trackers, intake forms, client portals, booking systems, calculators, reporting tools, workflow automators, CRMs, inventory tools, and more. All built with AI, delivered in days not months.
+
+FLOW:
+Phase "clarify": User described their app. Ask smart questions: Who uses this? What does it replace? What is the single most important thing it must do? Integrations needed? What data goes in and comes out?
+
+Phase "anything-else": Ask if there is anything else — examples, edge cases, restrictions.
+
+Phase "assess": You have enough info. First reason through the estimate by counting: How many distinct screens or views? How many data inputs and outputs? Any user authentication? Any third-party integrations? Any automated logic or workflows? Any email or notification triggers?
+
+Then assign hours based on this precise scale:
+- Single utility (calculator, converter, lookup tool): 1-3 hours
+- Simple form with email notification: 2-4 hours
+- Single-page tracker or dashboard (no auth): 3-6 hours
+- Multi-screen app, no auth, no integrations: 5-10 hours
+- App with database and basic auth: 8-16 hours
+- App with auth, email, and 1 integration: 12-24 hours
+- Multi-user app with roles and permissions: 20-35 hours
+- Complex workflow with multiple integrations: 30-60 hours
+- Full platform, multiple modules: 60-150 hours
+
+Add hours for each meaningful feature. Subtract if scope is narrow. Be precise — a 3-hour job should be quoted as 3 hours, not rounded up to 8. Accuracy builds trust.
+
+Produce this EXACT output:
+<ASSESSMENT>
+{
+  "projectName": "Short descriptive name (3-5 words)",
+  "summary": "2-3 sentences: what this app does, who it's for, what problem it solves",
+  "hours": <integer 1-150>,
+  "complexity": "low|medium|high",
+  "deliverables": ["deliverable 1", "deliverable 2", "deliverable 3", "deliverable 4", "deliverable 5"],
+  "timeline": "X-Y days or weeks"
 }
+</ASSESSMENT>
+Then write 2 warm sentences confirming the quote is ready to review.`;
 
-async function doLogout(){
-  await sb.auth.signOut();
-  document.getElementById('app-shell').classList.remove('active');
-  document.getElementById('login-screen').style.display='flex';
-}
+window.addEventListener('scroll',()=>document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>40));
 
-async function checkAuth(){
-  const {data:{session}}=await sb.auth.getSession();
-  if(session){initApp(session.user)}
-}
-
-function initApp(user){
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('app-shell').classList.add('active');
-  const initials=user.email.substring(0,2).toUpperCase();
-  document.getElementById('user-avatar').textContent=initials;
-  document.getElementById('user-email').textContent=user.email;
-  loadQueue();
-  loadTeam();
-}
-
-// ── NAVIGATION ──
-function showPage(page,btn){
-  document.querySelectorAll('[id^="page-"]').forEach(p=>p.style.display='none');
-  document.getElementById('page-'+page).style.display='block';
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  if(page==='queue')loadQueue();
-  if(page==='customers')loadCustomers();
-  if(page==='versions')loadVersions();
-  if(page==='campaigns')loadCampaigns();
-  if(page==='kpis')loadKPIs();
-  if(page==='team')loadTeam();
-}
-
-// ── TOAST ──
-function toast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast show '+type;
-  setTimeout(()=>t.className='toast',3000);
-}
-
-// ── FORMAT ──
-function fmt$$(n){return '$'+(n||0).toLocaleString()}
-function fmtDate(d){return d?new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}
-function badgeHtml(status){return `<span class="badge badge-${status}">${status.replace('_',' ')}</span>`}
-function initials(name){return name?name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2):'??'}
-
-// ── QUEUE ──
-async function loadQueue(){
-  const{data,error}=await sb.from('projects').select('*').order('created_at',{ascending:false});
-  if(error){toast('Error loading projects','error');return}
-  allProjects=data||[];
-  renderQueue(allProjects);
-  renderQueueStats(allProjects);
-  document.getElementById('new-badge').textContent=allProjects.filter(p=>p.status==='new').length;
-}
-
-function renderQueueStats(projects){
-  const total=projects.length;
-  const newCount=projects.filter(p=>p.status==='new').length;
-  const revenue=projects.filter(p=>['approved','live'].includes(p.status)).reduce((s,p)=>s+(p.monthly_fee||0),0);
-  const pipeline=projects.filter(p=>!['cancelled','live'].includes(p.status)).reduce((s,p)=>s+(p.setup_fee||0),0);
-  document.getElementById('queue-stats').innerHTML=`
-    <div class="stat-card"><div class="stat-label">Total projects</div><div class="stat-val blue">${total}</div><div class="stat-sub">All time</div></div>
-    <div class="stat-card"><div class="stat-label">New requests</div><div class="stat-val amber">${newCount}</div><div class="stat-sub">Needs attention</div></div>
-    <div class="stat-card"><div class="stat-label">Monthly recurring</div><div class="stat-val green">${fmt$$(revenue)}</div><div class="stat-sub">Active subscriptions</div></div>
-    <div class="stat-card"><div class="stat-label">Pipeline value</div><div class="stat-val accent">${fmt$$(pipeline)}</div><div class="stat-sub">Setup fees pending</div></div>`;
-}
-
-function renderQueue(projects){
-  const tbody=document.getElementById('queue-tbody');
-  if(!projects.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">No projects yet</td></tr>';return}
-  tbody.innerHTML=projects.map(p=>`
-    <tr class="clickable" onclick="openProject('${p.id}')">
-      <td style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600">${p.ref_code||'—'}</td>
-      <td><strong>${p.customer_name||'—'}</strong><br/><span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${p.customer_email||''}</span></td>
-      <td>${p.project_name||'—'}</td>
-      <td><strong>${fmt$$(p.setup_fee)}</strong><br/><span style="font-size:11px;color:var(--muted)">${fmt$$(p.monthly_fee)}/mo</span></td>
-      <td>${badgeHtml(p.status||'new')}</td>
-      <td style="font-family:var(--mono);font-size:12px">${fmtDate(p.created_at)}</td>
-      <td style="font-family:var(--mono);font-size:13px;text-align:center">${p.demo_views||0}</td>
-    </tr>`).join('');
-}
-
-function filterQueue(q){applyQueueFilters()}
-
-function applyQueueFilters(){
-  const q=(document.getElementById('queue-search')?.value||'').toLowerCase();
-  const status=document.getElementById('filter-status')?.value||'';
-  const complexity=document.getElementById('filter-complexity')?.value||'';
-  const filtered=allProjects.filter(p=>{
-    const matchSearch=!q||(p.customer_name||'').toLowerCase().includes(q)||(p.project_name||'').toLowerCase().includes(q)||(p.customer_email||'').toLowerCase().includes(q)||(p.ref_code||'').toLowerCase().includes(q);
-    const matchStatus=!status||p.status===status;
-    const matchComplexity=!complexity||p.complexity===complexity;
-    return matchSearch&&matchStatus&&matchComplexity;
-  });
-  renderQueue(filtered);
-}
-
-// ── PROJECT DETAIL ──
-async function openProject(id){
-  const p=allProjects.find(x=>x.id===id);
-  if(!p)return;
-  currentProject=p;
-  document.getElementById('panel-title').textContent=p.project_name||'Untitled Project';
-  document.getElementById('panel-ref').textContent=(p.ref_code||'')+'  ·  '+p.customer_name;
-  document.getElementById('status-select').value=p.status||'new';
-  document.getElementById('detail-panel').classList.add('open');
-  document.getElementById('overlay').classList.add('show');
-  switchTab('overview',null);
-}
-
-function closePanel(){
-  document.getElementById('detail-panel').classList.remove('open');
-  document.getElementById('overlay').classList.remove('show');
-  currentProject=null;
-}
-
-function switchTab(tab,btn){
-  currentTab=tab;
-  document.querySelectorAll('.panel-tab').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  else document.querySelectorAll('.panel-tab')[['overview','transcript','demo','drip','versions'].indexOf(tab)]?.classList.add('active');
-  renderTab(tab);
-}
-
-function renderTab(tab){
-  const p=currentProject;
-  if(!p)return;
-  const body=document.getElementById('panel-body');
-
-  if(tab==='overview'){
-    body.innerHTML=`
-      <div class="detail-section">
-        <h4>Customer info <button class="btn btn-sm" style="margin-left:8px;font-size:11px" onclick="toggleEditCustomer()">✏️ Edit</button></h4>
-        <div id="customer-view">
-          <div class="info-grid">
-            <div class="info-item"><div class="lbl">Name</div><div class="val">${p.customer_name||'—'}</div></div>
-            <div class="info-item"><div class="lbl">Email</div><div class="val">${p.customer_email||'—'}</div></div>
-            <div class="info-item"><div class="lbl">Phone</div><div class="val">${p.customer_phone||'—'}</div></div>
-            <div class="info-item"><div class="lbl">Ref code</div><div class="val" style="font-family:var(--mono)">${p.ref_code||'—'}</div></div>
-          </div>
-        </div>
-        <div id="customer-edit" style="display:none">
-          <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div><div class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px">Name</div><input class="demo-input" id="edit-name" value="${p.customer_name||''}"/></div>
-            <div><div class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px">Email</div><input class="demo-input" id="edit-email" value="${p.customer_email||''}"/></div>
-            <div><div class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px">Phone</div><input class="demo-input" id="edit-phone" value="${p.customer_phone||''}"/></div>
-            <div><div class="lbl" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px">Ref code</div><input class="demo-input" value="${p.ref_code||''}" disabled style="opacity:.5"/></div>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-primary btn-sm" onclick="saveCustomerInfo()">Save changes</button>
-            <button class="btn btn-sm" onclick="toggleEditCustomer()">Cancel</button>
-          </div>
-        </div>
-      </div>
-      <div class="detail-section">
-        <h4>Project summary</h4>
-        <div class="info-grid">
-          <div class="info-item full"><div class="lbl">Summary</div><div class="val" style="font-weight:400;line-height:1.5">${p.summary||'—'}</div></div>
-          <div class="info-item"><div class="lbl">Setup fee</div><div class="val" style="color:var(--amber)">${fmt$$(p.setup_fee)}</div></div>
-          <div class="info-item"><div class="lbl">Monthly fee</div><div class="val">${fmt$$(p.monthly_fee)}/mo</div></div>
-          <div class="info-item"><div class="lbl">Complexity</div><div class="val">${p.complexity||'—'}</div></div>
-          <div class="info-item"><div class="lbl">Timeline</div><div class="val">${p.timeline||'—'}</div></div>
-        </div>
-      </div>
-      <div class="detail-section">
-        <h4>Deliverables</h4>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          ${(p.deliverables||[]).map(d=>`<div style="display:flex;gap:8px;font-size:13px"><span style="color:var(--green)">✓</span>${d}</div>`).join('')}
-        </div>
-      </div>
-      <div class="detail-section">
-        <h4>Internal notes</h4>
-        <textarea class="notes-area" id="notes-area" placeholder="Add notes visible only to your team…">${p.internal_notes||''}</textarea>
-      </div>`;
-  }
-
-  if(tab==='transcript'){
-    const msgs=p.transcript||[];
-    body.innerHTML=`<div class="transcript">${msgs.map(m=>`
-      <div class="t-msg ${m.role==='user'?'customer':'ai'}">
-        <div class="t-avatar ${m.role==='user'?'customer':'ai'}">${m.role==='user'?initials(p.customer_name):'AI'}</div>
-        <div class="t-bubble">${(m.content||'').replace(/\n/g,'<br/>')}</div>
-      </div>`).join('')}
-    </div>`;
-  }
-
-  if(tab==='demo'){
-    body.innerHTML=`
-      <div class="detail-section">
-        <h4>Demo approval link</h4>
-        <div style="font-family:var(--mono);font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;word-break:break-all;color:var(--accent);margin-bottom:10px">
-          https://cbasham75.github.io/aiai-admin/approval.html?ref=${p.ref_code}
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:16px">
-          <button class="btn btn-primary btn-sm" onclick="sendDemoEmail()">&#x1F4E4; Send to customer</button>
-          <button class="btn btn-sm" onclick="navigator.clipboard.writeText('https://cbasham75.github.io/aiai-admin/approval.html?ref='+currentProject.ref_code);toast('Copied!','success')">Copy</button>
-        </div>
-        <details>
-          <summary style="font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase">&#x25B6; Advanced — Raw demo URL</summary>
-          <div style="margin-top:10px">
-            <div class="demo-input-row">
-              <input class="demo-input" id="demo-url-input" placeholder="https://cbasham75.github.io/aiai-demos/ANK-XXXX/" value="${p.demo_url||''}"/>
-              <button class="btn btn-primary btn-sm" onclick="saveDemoUrl()">Save</button>
-            </div>
-            ${p.demo_url?`<div style="font-size:12px;color:var(--muted);margin-top:6px">Current: <a href="${p.demo_url}" target="_blank" style="color:var(--blue)">${p.demo_url}</a></div>`:''}
-          </div>
-        </details>
-      </div>
-      <div class="detail-section">
-        <h4>Demo stats</h4>
-        <div class="info-grid">
-          <div class="info-item"><div class="lbl">Times viewed</div><div class="val" style="color:var(--blue)">${p.demo_views||0}</div></div>
-          <div class="info-item"><div class="lbl">Last viewed</div><div class="val">${fmtDate(p.demo_last_viewed)}</div></div>
-          <div class="info-item"><div class="lbl">Approved</div><div class="val">${p.demo_approved?'✅ Yes':'Pending'}</div></div>
-          <div class="info-item"><div class="lbl">Expires</div><div class="val" style="font-family:var(--mono);font-size:12px">${p.demo_expires_at?fmtDate(p.demo_expires_at):'Not set'}</div></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn btn-sm" onclick="setDemoExpiry(48)">Set 48hr expiry</button>
-          <button class="btn btn-sm" onclick="setDemoExpiry(24)">+24hr extension</button>
-          ${p.demo_approved?'<span style="color:var(--green);font-size:13px;display:flex;align-items:center">✅ Approved</span>':'<span style="color:var(--muted);font-size:13px;display:flex;align-items:center">⏳ Awaiting approval</span>'}
-        </div>
-      </div>
-      <div class="detail-section">
-        <h4>Demo approval link</h4>
-        <div style="font-family:var(--mono);font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;word-break:break-all;color:var(--accent);margin-bottom:8px">
-          https://cbasham75.github.io/aiai-admin/approval.html?ref=${p.ref_code}
-        </div>
-        <button class="btn btn-sm" onclick="navigator.clipboard.writeText('https://cbasham75.github.io/aiai-admin/approval.html?ref=${p.ref_code}');toast('Link copied!','success')">Copy approval link</button>
-      </div>
-      <div class="detail-section">
-        <h4>Send demo email</h4>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Send the demo link to <strong>${p.customer_email}</strong> with a review request.</p>
-        <button class="btn btn-primary" onclick="sendDemoEmail()">📤 Send demo link to customer</button>
-      </div>
-      <div class="detail-section">
-        <h4>Subscription</h4>
-        <div class="info-grid">
-          <div class="info-item"><div class="lbl">Status</div><div class="val">${badgeHtml(p.subscription_status||'pending')}</div></div>
-          <div class="info-item"><div class="lbl">Monthly fee</div><div class="val">${fmt$$(p.monthly_fee)}/mo</div></div>
-        </div>
-        ${p.status==='live'?`<button class="btn btn-danger btn-sm" style="margin-top:12px" onclick="cancelSubscription()">Cancel subscription</button>`:''}
-      </div>`;
-  }
-
-  if(tab==='drip'){
-    const campaigns=[
-      {name:'Welcome email',key:'drip_welcome',desc:'Sent immediately after approval'},
-      {name:'7-day check-in',key:'drip_7day',desc:'How are things going?'},
-      {name:'30-day survey',key:'drip_30day',desc:'Satisfaction survey'},
-      {name:'Feature ideas',key:'drip_features',desc:'Suggestions for v2'},
-    ];
-    body.innerHTML=`
-      <div class="detail-section">
-        <h4>Drip campaign status</h4>
-        <div>${campaigns.map(c=>`
-          <div class="drip-item">
-            <div class="drip-status ${p[c.key]?'sent':'pending'}"></div>
-            <div class="drip-info">
-              <div class="drip-name">${c.name}</div>
-              <div class="drip-date">${c.desc}${p[c.key]?' · Sent '+fmtDate(p[c.key]):' · Not sent yet'}</div>
-            </div>
-            ${!p[c.key]?`<button class="btn btn-sm" onclick="sendDrip('${c.key}','${c.name}')">Send now</button>`:'<span style="font-size:12px;color:var(--green)">✓ Sent</span>'}
-          </div>`).join('')}
-        </div>
-      </div>`;
-  }
-
-  if(tab==='versions'){
-    body.innerHTML=`
-      <div class="detail-section">
-        <h4>Version history</h4>
-        <div class="version-item">
-          <div>
-            <div class="version-num">v1 — Initial build</div>
-            <div class="version-info">${fmtDate(p.created_at)} · ${fmt$$(p.setup_fee)} · ${p.complexity} complexity</div>
-          </div>
-          ${badgeHtml(p.status||'new')}
-        </div>
-        <div style="margin-top:16px">
-          <button class="btn btn-primary btn-sm" onclick="toast('Feature request flow coming soon — will link to new consultation','')">+ Add feature / new version</button>
-        </div>
-      </div>`;
-  }
-}
-
-// ── ACTIONS ──
-async function updateStatus(status){
-  if(!currentProject)return;
-  const{error}=await sb.from('projects').update({status}).eq('id',currentProject.id);
-  if(error){toast('Error updating status','error');return}
-  currentProject.status=status;
-  allProjects=allProjects.map(p=>p.id===currentProject.id?{...p,status}:p);
-  renderQueue(allProjects);
-  renderQueueStats(allProjects);
-  document.getElementById('new-badge').textContent=allProjects.filter(p=>p.status==='new').length;
-  toast('Status updated','success');
-}
-
-async function setDemoExpiry(hours){
-  if(!currentProject)return;
-  const base=currentProject.demo_expires_at&&new Date(currentProject.demo_expires_at)>new Date()
-    ?new Date(currentProject.demo_expires_at)
-    :new Date();
-  const newExpiry=new Date(base.getTime()+hours*3600000).toISOString();
-  const{error}=await sb.from('projects').update({demo_expires_at:newExpiry}).eq('id',currentProject.id);
-  if(error){toast('Error setting expiry','error');return}
-  currentProject.demo_expires_at=newExpiry;
-  toast('Demo expiry set to '+new Date(newExpiry).toLocaleString(),'success');
-  renderTab('demo');
-}
-
-function toggleEditCustomer(){
-  const view=document.getElementById('customer-view');
-  const edit=document.getElementById('customer-edit');
-  if(!view||!edit)return;
-  const isEditing=edit.style.display!=='none';
-  view.style.display=isEditing?'block':'none';
-  edit.style.display=isEditing?'none':'block';
-}
-
-async function saveCustomerInfo(){
-  if(!currentProject)return;
-  const name=document.getElementById('edit-name')?.value.trim();
-  const email=document.getElementById('edit-email')?.value.trim();
-  const phone=document.getElementById('edit-phone')?.value.trim();
-  if(!name||!email){toast('Name and email are required','error');return}
-  const{error}=await sb.from('projects').update({customer_name:name,customer_email:email,customer_phone:phone||null}).eq('id',currentProject.id);
-  if(error){toast('Error saving customer info','error');return}
-  currentProject.customer_name=name;
-  currentProject.customer_email=email;
-  currentProject.customer_phone=phone;
-  allProjects=allProjects.map(p=>p.id===currentProject.id?{...p,customer_name:name,customer_email:email,customer_phone:phone}:p);
-  renderQueue(allProjects);
-  toggleEditCustomer();
-  switchTab('overview',null);
-  toast('Customer info updated','success');
-}
-
-async function saveNotes(){
-  if(!currentProject)return;
-  const notes=document.getElementById('notes-area')?.value||'';
-  const{error}=await sb.from('projects').update({internal_notes:notes}).eq('id',currentProject.id);
-  if(error){toast('Error saving notes','error');return}
-  currentProject.internal_notes=notes;
-  toast('Notes saved','success');
-}
-
-async function saveDemoUrl(){
-  if(!currentProject)return;
-  const url=document.getElementById('demo-url-input')?.value.trim();
-  const{error}=await sb.from('projects').update({demo_url:url}).eq('id',currentProject.id);
-  if(error){toast('Error saving URL','error');return}
-  currentProject.demo_url=url;
-  toast('Demo URL saved','success');
-}
-
-async function sendDemoEmail(){
-  if(!currentProject){toast('No project selected','error');return}
-  if(!currentProject.demo_url){toast('Set a demo URL first','error');return}
-  const p=currentProject;
-  const approvalLink=`https://cbasham75.github.io/aiai-admin/approval.html?ref=${p.ref_code}`;
+// ── FOUNDING 50 ──
+async function loadFoundingCounter(){
   try{
-    await fetch(CLOUDFLARE_WORKER,{
+    const{count}=await sb.from('projects').select('*',{count:'exact',head:true}).in('status',['approved','live']);
+    const taken=count||0;
+    const total=50;
+    const remaining=Math.max(0,total-taken);
+    const pct=Math.min(100,Math.round(taken/total*100));
+    const el=document.getElementById('founding-remaining');
+    const lbl=document.getElementById('founding-label');
+    const bar=document.getElementById('founding-bar');
+    if(el)el.textContent=remaining;
+    if(lbl)lbl.textContent=remaining===0?'All spots claimed — join the waitlist':'spots remaining of 50';
+    if(bar)bar.style.width=pct+'%';
+    if(remaining===0&&el)el.style.color='var(--muted)';
+  }catch(e){
+    const el=document.getElementById('founding-remaining');
+    if(el)el.textContent='50';
+  }
+}
+loadFoundingCounter();
+
+// ── CONTACT FORM ──
+async function submitContact(){
+  const name=document.getElementById('cf-name').value.trim();
+  const email=document.getElementById('cf-email').value.trim();
+  const subject=document.getElementById('cf-subject').value;
+  const message=document.getElementById('cf-message').value.trim();
+  if(!name||!email||!message){showToast('Please fill in all fields');return}
+  if(!email.includes('@')){showToast('Please enter a valid email');return}
+  try{
+    await fetch(EDGE_FN_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         _action:'send_email',
-        to:p.customer_email,
-        subject:`Your Ainkle app is ready for review — ${p.project_name}`,
-        html:`<h2>Your app is ready!</h2>
-<p>Hi ${p.customer_name?.split(' ')[0]||'there'},</p>
-<p>Great news — your <strong>${p.project_name}</strong> MVP is built and ready for your review.</p>
-<p><a href="${approvalLink}" style="background:#4FC3F7;color:#0d0f1a;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;margin:16px 0">&#x1F440; Review your app</a></p>
-<p>Take it for a spin and let us know what you think. You can approve it or request changes directly from the review page.</p>
-<p>Your demo is available for 48 hours.</p>
-<p>Reference: <strong>${p.ref_code}</strong></p>
-<p>&#x2014; The Ainkle Team</p>`
+        to:'aiai.admin@gmail.com',
+        subject:'Ainkle contact: '+(subject||'General inquiry'),
+        html:'<h2>Contact form</h2><p><strong>Name:</strong> '+name+'</p><p><strong>Email:</strong> '+email+'</p><p><strong>Subject:</strong> '+(subject||'Not specified')+'</p><hr/><p>'+message+'</p>'
       })
     });
-    toast('Demo email sent to '+p.customer_email,'success');
-    await sb.from('projects').update({status:'demo_sent'}).eq('id',p.id);
-    currentProject.status='demo_sent';
-    document.getElementById('status-select').value='demo_sent';
-  }catch(e){toast('Error sending email','error');console.error(e)}
+    document.getElementById('contact-form-body').style.display='none';
+    document.getElementById('cf-success').style.display='block';
+  }catch(e){showToast('Error sending. Please email hello@ainkle.com directly.');}
 }
 
-async function sendDrip(key,name){
-  if(!currentProject)return;
-  const p=currentProject;
-  const now=new Date().toISOString();
-  await sb.from('projects').update({[key]:now}).eq('id',p.id);
-  currentProject[key]=now;
-  toast(`${name} sent to ${p.customer_email}`,'success');
-  renderTab('drip');
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000)}
+function showSaving(v){document.getElementById('saving-overlay').classList.toggle('active',v)}
+function setProgress(p){document.getElementById('progress').style.width=p+'%'}
+function genRef(){return 'ANK-'+Math.random().toString(36).substr(2,6).toUpperCase()}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,180)+'px'}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}}
+function clearQR(){document.getElementById('quick-replies-area').innerHTML=''}
+
+function addMsg(role,content){
+  const chat=document.getElementById('chat');
+  const d=document.createElement('div');d.className='msg '+(role==='user'?'user':'ai');
+  const av=document.createElement('div');av.className='avatar '+(role==='user'?'human':'ai');av.textContent=role==='user'?'You':'AI';
+  const b=document.createElement('div');b.className='bubble';b.innerHTML=content.replace(/\n/g,'<br/>');
+  d.appendChild(av);d.appendChild(b);chat.appendChild(d);
+  setTimeout(()=>chat.scrollTop=chat.scrollHeight,50);
 }
 
-async function cancelSubscription(){
-  if(!currentProject)return;
-  if(!confirm('Cancel this subscription? This will notify the customer.'))return;
-  await sb.from('projects').update({status:'cancelled',subscription_status:'cancelled'}).eq('id',currentProject.id);
-  currentProject.status='cancelled';
-  document.getElementById('status-select').value='cancelled';
-  toast('Subscription cancelled','success');
-  renderTab('demo');
+function showTyping(){
+  const chat=document.getElementById('chat');
+  const d=document.createElement('div');d.className='msg ai';d.id='typing-indicator';
+  d.innerHTML='<div class="avatar ai">AI</div><div class="bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  chat.appendChild(d);chat.scrollTop=chat.scrollHeight;
 }
+function hideTyping(){const t=document.getElementById('typing-indicator');if(t)t.remove()}
 
-// ── CUSTOMERS ──
-async function loadCustomers(){
-  const{data}=await sb.from('projects').select('*').order('created_at',{ascending:false});
-  const projects=data||[];
-  // Group by email
-  const map={};
-  projects.forEach(p=>{
-    const key=p.customer_email||p.id;
-    if(!map[key])map[key]={...p,projectCount:0,totalValue:0};
-    map[key].projectCount++;
-    map[key].totalValue+=(p.setup_fee||0);
+function setQR(chips){
+  clearQR();
+  if(!chips||!chips.length)return;
+  const row=document.createElement('div');row.className='quick-replies';
+  chips.forEach(c=>{
+    const btn=document.createElement('button');btn.className='qr-chip';btn.textContent=c;
+    btn.onclick=()=>{document.getElementById('user-input').value=c;sendMessage()};
+    row.appendChild(btn);
   });
-  const customers=Object.values(map);
-  const container=document.getElementById('customers-list');
-  if(!customers.length){container.innerHTML='<div class="empty"><div class="empty-icon">👥</div><h3>No customers yet</h3><p>Customers will appear here when they submit projects.</p></div>';return}
-  container.innerHTML=customers.map(c=>`
-    <div class="customer-card" onclick="openProject('${c.id}')">
-      <div class="customer-initials">${initials(c.customer_name)}</div>
-      <div class="customer-info">
-        <div class="customer-name">${c.customer_name||'Unknown'}</div>
-        <div class="customer-meta">${c.customer_email||''} ${c.customer_phone?'· '+c.customer_phone:''}</div>
-      </div>
-      <div class="customer-stats">
-        <div class="cstat"><strong>${c.projectCount}</strong>projects</div>
-        <div class="cstat"><strong>${fmt$$(c.totalValue)}</strong>total value</div>
-        <div class="cstat"><strong>${badgeHtml(c.status||'new')}</strong></div>
-      </div>
-    </div>`).join('');
+  document.getElementById('quick-replies-area').appendChild(row);
 }
 
-function filterCustomers(q){
-  document.querySelectorAll('.customer-card').forEach(c=>{
-    c.style.display=c.textContent.toLowerCase().includes(q.toLowerCase())?'flex':'none';
-  });
+function startApp(){
+  document.getElementById('hero').style.display='none';
+  document.getElementById('app').style.display='block';
+  window.scrollTo(0,0);setProgress(5);
+  setTimeout(()=>document.getElementById('input-name').focus(),100);
 }
 
-// ── VERSIONS ──
-async function loadVersions(){
-  const{data}=await sb.from('projects').select('*').order('created_at',{ascending:false});
-  const projects=data||[];
-  const tbody=document.getElementById('versions-tbody');
-  tbody.innerHTML=projects.map(p=>`
-    <tr class="clickable" onclick="openProject('${p.id}')">
-      <td>${p.customer_name||'—'}</td>
-      <td>${p.project_name||'—'}</td>
-      <td><span style="font-family:var(--mono);font-size:12px;color:var(--accent)">v1</span></td>
-      <td>${badgeHtml(p.status||'new')}</td>
-      <td style="font-family:var(--mono);font-size:12px">${fmtDate(p.created_at)}</td>
-    </tr>`).join('');
-
-  // KPIs
-  const avgVersions=1; // Will grow as we track versions
-  const mostRevisions=projects[0];
-  document.getElementById('version-kpis').innerHTML=`
-    <div class="kpi-card"><div class="kpi-label">Avg versions per app</div><div class="kpi-val">${avgVersions.toFixed(1)}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${Math.min(avgVersions/5*100,100)}%"></div></div></div>
-    <div class="kpi-card"><div class="kpi-label">Total projects</div><div class="kpi-val">${projects.length}</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div></div>
-    <div class="kpi-card"><div class="kpi-label">Most active customer</div><div class="kpi-val" style="font-size:16px">${mostRevisions?.customer_name||'—'}</div></div>`;
+function submitContact(){
+  const name=document.getElementById('input-name').value.trim();
+  const email=document.getElementById('input-email').value.trim();
+  if(!name){showToast('Please enter your name');return}
+  if(!email||!email.includes('@')){showToast('Please enter a valid email address');return}
+  state.customer={name,email,phone:document.getElementById('input-phone').value.trim(),company:document.getElementById('input-company').value.trim()};
+  document.getElementById('contact-form').style.display='none';
+  document.getElementById('chat-section').style.display='block';
+  const first=name.split(' ')[0];
+  document.getElementById('app-title').textContent=`Hey ${first} 👋`;
+  document.getElementById('app-sub').textContent='Tell our AI consultant what you need built.';
+  setProgress(15);state.phase=1;
+  setTimeout(()=>{
+    const co=state.customer.company?` I see you're with ${state.customer.company} — great.`:'';
+    addMsg('ai',`Nice to meet you, ${first}!${co} I'm Ainkle's consulting assistant. My job is to understand exactly what you need built, then put together a quote and spec our team can start from.\n\nSo — what's the app you wish existed? Describe it like you're telling a friend. Don't worry about being technical or not technical enough.`);
+    document.getElementById('user-input').focus();
+  },400);
 }
 
-// ── CAMPAIGNS ──
-async function loadCampaigns(){
-  const{data}=await sb.from('projects').select('*').order('created_at',{ascending:false});
-  const projects=data||[];
-  const tbody=document.getElementById('campaigns-tbody');
-  tbody.innerHTML=projects.map(p=>`
-    <tr>
-      <td><strong>${p.customer_name||'—'}</strong><br/><span style="font-size:11px;color:var(--muted)">${p.project_name||''}</span></td>
-      <td>${p.drip_welcome?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
-      <td>${p.drip_7day?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
-      <td>${p.drip_30day?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
-      <td>${p.drip_features?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--muted)">—</span>'}</td>
-      <td><button class="btn btn-sm" onclick="openProject('${p.id}');setTimeout(()=>switchTab('drip',null),300)">Manage</button></td>
-    </tr>`).join('');
+async function sendMessage(){
+  const input=document.getElementById('user-input');
+  const text=input.value.trim();
+  if(!text)return;
+  clearQR();input.value='';input.style.height='auto';
+  document.getElementById('send-btn').disabled=true;
+  addMsg('user',text);
+  state.messages.push({role:'user',content:text});
+  showTyping();
+
+  let note=SYSTEM_PROMPT;
+  if(state.phase===1){note+='\n\nCurrent phase: "clarify". User just described app. Ask your 2-3 clarifying questions.';state.phase=2;setProgress(30)}
+  else if(state.phase===2){note+='\n\nCurrent phase: "clarify" follow-up. Absorb answers. Ask remaining questions OR move to "anything-else" if you have enough.';setProgress(50)}
+  else if(state.phase===3){note+='\n\nCurrent phase: "anything-else". Ask if anything else would help.';state.phase=4;setProgress(65)}
+  else if(state.phase===4){note+='\n\nCurrent phase: "assess". You have all the info. Produce the <ASSESSMENT> JSON then your warm 2-sentence message.';setProgress(80)}
+
+  try{
+    const res=await fetch(EDGE_FN_URL,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:1000,system:note,messages:state.messages})});
+    const data=await res.json();
+    hideTyping();
+    const reply=data.content?.[0]?.text||'Sorry, I had a hiccup. Please try again.';
+    state.messages.push({role:'assistant',content:reply});
+    const m=reply.match(/<ASSESSMENT>([\s\S]*?)<\/ASSESSMENT>/);
+    if(m){
+      const friendly=reply.replace(/<ASSESSMENT>[\s\S]*?<\/ASSESSMENT>/,'').trim();
+      if(friendly)addMsg('ai',friendly);
+      try{state.quote=JSON.parse(m[1].trim());showUploadPhase()}catch(e){addMsg('ai',reply)}
+    } else {
+      addMsg('ai',reply);
+      if(state.phase===2&&(reply.toLowerCase().includes('anything else')||reply.toLowerCase().includes('anything i'))){state.phase=3;setProgress(60);setQR(['Nope, that covers it!','Yes — let me add something','I have examples to share'])}
+      else if(state.phase===2){state.phase=4;setQR(['That covers everything','One more thing to add'])}
+      else if(state.phase===3){setQR(["Nothing else, let's see the quote",'Actually, one more thing…'])}
+    }
+  }catch(e){hideTyping();addMsg('ai','Connection issue. Please try again.');console.error(e)}
+  document.getElementById('send-btn').disabled=false;
+  document.getElementById('user-input').focus();
 }
 
-// ── KPIS ──
-async function loadKPIs(){
-  const{data}=await sb.from('projects').select('*');
-  const projects=data||[];
-  const total=projects.length;
-  const live=projects.filter(p=>p.status==='live').length;
-  const mrr=projects.filter(p=>p.status==='live').reduce((s,p)=>s+(p.monthly_fee||0),0);
-  const arr=mrr*12;
-  const pipeline=projects.filter(p=>!['cancelled','live'].includes(p.status)).reduce((s,p)=>s+(p.setup_fee||0),0);
-  const avgSetup=total?Math.round(projects.reduce((s,p)=>s+(p.setup_fee||0),0)/total):0;
-  const convRate=total?Math.round(live/total*100):0;
-
-  document.getElementById('kpis-content').innerHTML=`
-    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
-      <div class="stat-card"><div class="stat-label">Monthly recurring revenue</div><div class="stat-val green">${fmt$$(mrr)}</div><div class="stat-sub">From ${live} live apps</div></div>
-      <div class="stat-card"><div class="stat-label">Annual recurring revenue</div><div class="stat-val green">${fmt$$(arr)}</div><div class="stat-sub">Projected ARR</div></div>
-      <div class="stat-card"><div class="stat-label">Pipeline value</div><div class="stat-val accent">${fmt$$(pipeline)}</div><div class="stat-sub">Setup fees in progress</div></div>
-    </div>
-    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
-      <div class="stat-card"><div class="stat-label">Total projects</div><div class="stat-val blue">${total}</div><div class="stat-sub">All time</div></div>
-      <div class="stat-card"><div class="stat-label">Conversion rate</div><div class="stat-val">${convRate}%</div><div class="stat-sub">Submissions to live</div></div>
-      <div class="stat-card"><div class="stat-label">Avg setup fee</div><div class="stat-val">${fmt$$(avgSetup)}</div><div class="stat-sub">Per project</div></div>
-    </div>
-    <div class="table-card">
-      <div class="table-header"><h3>Status breakdown</h3></div>
-      <table><thead><tr><th>Status</th><th>Count</th><th>% of total</th></tr></thead><tbody>
-        ${['new','reviewing','building','demo_sent','approved','live','cancelled'].map(s=>{
-          const count=projects.filter(p=>p.status===s).length;
-          const pct=total?Math.round(count/total*100):0;
-          return `<tr><td>${badgeHtml(s)}</td><td style="font-family:var(--mono)">${count}</td><td style="font-family:var(--mono)">${pct}%</td></tr>`;
-        }).join('')}
-      </tbody></table>
-    </div>`;
+function showUploadPhase(){
+  document.getElementById('input-area').style.display='none';
+  document.getElementById('upload-area').style.display='block';
+  clearQR();
+  setTimeout(()=>addMsg('ai','Almost there! One last thing — do you currently use any document, spreadsheet, or file to handle this manually? If so, upload it now and I\'ll use it to make your spec much more accurate.'),400);
 }
 
-// ── TEAM ──
-async function loadTeam(){
-  const{data}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
-  const members=data||[];
-  const tbody=document.getElementById('team-tbody');
-  if(!members.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--muted)">No team members yet</td></tr>';return}
-  tbody.innerHTML=members.map(m=>`
-    <tr>
-      <td><strong>${m.full_name||'—'}</strong></td>
-      <td style="font-family:var(--mono);font-size:13px">${m.email||'—'}</td>
-      <td>${badgeHtml(m.role||'employee')}</td>
-      <td style="font-family:var(--mono);font-size:12px">${fmtDate(m.created_at)}</td>
-    </tr>`).join('');
+function triggerUpload(){document.getElementById('file-input').click()}
+function dragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('dragover')}
+function dragLeave(){document.getElementById('drop-zone').classList.remove('dragover')}
+function dropFile(e){e.preventDefault();dragLeave();handleFiles(e.dataTransfer.files)}
+function handleFiles(files){Array.from(files).forEach(f=>{if(!state.uploadedFiles.find(x=>x.name===f.name))state.uploadedFiles.push(f)});renderFileList()}
+function removeFile(i){state.uploadedFiles.splice(i,1);renderFileList()}
+function renderFileList(){
+  const list=document.getElementById('file-list');list.innerHTML='';
+  state.uploadedFiles.forEach((f,i)=>{const c=document.createElement('div');c.className='file-chip';c.innerHTML=`<span>📄</span><span class="file-name">${f.name}</span><span class="remove" onclick="removeFile(${i})">×</span>`;list.appendChild(c)});
+  document.getElementById('continue-upload').style.display=state.uploadedFiles.length?'inline-flex':'none';
+}
+function skipUpload(){
+  document.getElementById('upload-area').style.display='none';
+  addMsg('user','No files to share');
+  state.messages.push({role:'user',content:'No additional files. Please proceed with the assessment.'});
+  showQuote(state.quote);
+}
+function afterUpload(){
+  document.getElementById('upload-area').style.display='none';
+  const names=state.uploadedFiles.map(f=>f.name).join(', ');
+  addMsg('user',`Uploaded ${state.uploadedFiles.length} file(s): ${names}`);
+  state.messages.push({role:'user',content:`Uploaded files: ${names}. Please proceed with assessment.`});
+  showQuote(state.quote);
 }
 
-function showInvite(){
-  toast('Invite via Supabase Auth dashboard for now — full invite flow coming soon','');
+function showQuote(a){
+  setProgress(95);clearQR();
+  document.getElementById('input-area').style.display='none';
+  document.getElementById('upload-area').style.display='none';
+  const hourlyRate=100;
+  const setupFee=Math.round(a.hours*1.5*hourlyRate);
+  const monthlyFee=Math.round(a.hours*hourlyRate*0.20);
+  const refId=genRef();
+  state.refId=refId;state.setupFee=setupFee;state.monthlyFee=monthlyFee;
+  const cc=a.complexity==='low'?'#4ecb71':a.complexity==='medium'?'#e8a628':'#e85050';
+  const qArea=document.getElementById('quote-area');
+  qArea.style.display='block';
+  qArea.innerHTML=`
+<div class="quote-card">
+  <div class="quote-header">
+    <div><div class="quote-label">Your Quote</div><div class="quote-project">${a.projectName}</div></div>
+    <div style="text-align:right"><div class="quote-id">${refId}</div><div style="font-size:12px;margin-top:4px;padding:4px 10px;border-radius:20px;display:inline-block;background:${cc}22;color:${cc};font-family:var(--mono)">${a.complexity} complexity</div></div>
+  </div>
+  <div style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.6">${a.summary}</div>
+  <div class="quote-grid">
+    <div class="qstat"><div class="qstat-label">Setup fee (one-time)</div><div class="qstat-val accent">$${setupFee.toLocaleString()}</div><div class="qstat-sub">One-time build fee</div></div>
+    <div class="qstat"><div class="qstat-label">Monthly hosting + support</div><div class="qstat-val">$${monthlyFee.toLocaleString()}<span style="font-size:14px;font-weight:400;color:var(--muted)">/mo</span></div><div class="qstat-sub">Hosting, updates &amp; support</div></div>
+  </div>
+  <div style="margin-bottom:32px">
+    <div class="breakdown-row"><span class="lbl">Estimated timeline</span><span class="val">${a.timeline}</span></div>
+    <div class="breakdown-row total"><span class="lbl">Setup fee total</span><span class="val">$${setupFee.toLocaleString()}</span></div>
+  </div>
+  <div class="wyg-title">What's included</div>
+  <div class="wyg-list">
+    ${(a.deliverables||[]).map(d=>`<div class="wyg-item">${d}</div>`).join('')}
+    <div class="wyg-item">Working MVP delivered in ${a.timeline} for your review and feedback</div>
+    <div class="wyg-item">Hosted on your own URL with SSL certificate</div>
+    <div class="wyg-item">Ongoing support &amp; updates included in monthly fee</div>
+  </div>
+  <button class="proceed-btn" id="proceed-btn" onclick="proceed()">
+    <span style="font-size:24px">🤖</span>
+    Yes — let's build it! &nbsp;→
+  </button>
+  <div style="text-align:center;margin-top:16px;font-size:12px;color:var(--muted)">No payment now. We'll confirm details before any charges.</div>
+</div>`;
+  setTimeout(()=>qArea.scrollIntoView({behavior:'smooth',block:'start'}),200);
 }
 
-// ── SUPABASE DB ADDITIONS ──
-// Add missing columns if they don't exist (run once)
-async function ensureColumns(){
-  // These columns need to be added to the projects table in Supabase
-  // Run this SQL in Supabase SQL editor:
-  // alter table projects add column if not exists internal_notes text;
-  // alter table projects add column if not exists demo_views integer default 0;
-  // alter table projects add column if not exists demo_last_viewed timestamp with time zone;
-  // alter table projects add column if not exists demo_approved boolean default false;
-  // alter table projects add column if not exists subscription_status text default 'pending';
-  // alter table projects add column if not exists drip_welcome timestamp with time zone;
-  // alter table projects add column if not exists drip_7day timestamp with time zone;
-  // alter table projects add column if not exists drip_30day timestamp with time zone;
-  // alter table projects add column if not exists drip_features timestamp with time zone;
-  // alter table projects add column if not exists live_url text;
+async function proceed(){
+  document.getElementById('proceed-btn').disabled=true;
+  showSaving(true);
+  try{
+    const {data,error}=await sb.from('projects').insert([{
+      customer_name:state.customer.name,
+      customer_email:state.customer.email,
+      customer_phone:state.customer.phone||null,
+      project_name:state.quote.projectName,
+      summary:state.quote.summary,
+      status:'new',
+      hours:state.quote.hours,
+      complexity:state.quote.complexity,
+      setup_fee:state.setupFee,
+      monthly_fee:state.monthlyFee,
+      timeline:state.quote.timeline,
+      ref_code:state.refId,
+      transcript:state.messages,
+      deliverables:state.quote.deliverables,
+      uploaded_files:state.uploadedFiles.map(f=>({name:f.name,size:f.size,type:f.type}))
+    }]).select();
+    if(error)throw error;
+    // Save messages
+    for(const msg of state.messages){
+      await sb.from('messages').insert([{project_id:data[0].id,sender:msg.role==='user'?'customer':'ainkle',content:msg.content}]);
+    }
+    // Fire notification email
+    try{
+      await fetch(EDGE_FN_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          _action:'notify_new_project',
+          customerName:state.customer.name,
+          customerEmail:state.customer.email,
+          customerPhone:state.customer.phone||'Not provided',
+          projectName:state.quote.projectName,
+          summary:state.quote.summary,
+          setupFee:state.setupFee,
+          monthlyFee:state.monthlyFee,
+          timeline:state.quote.timeline,
+          complexity:state.quote.complexity,
+          refCode:state.refId
+        })
+      });
+    }catch(emailErr){console.warn('Email notification failed:',emailErr)}
+    showSaving(false);
+    document.getElementById('app').style.display='none';
+    document.getElementById('submitted').classList.add('active');
+    document.getElementById('ref-code').textContent=state.refId;
+    document.getElementById('confirm-email').textContent=state.customer.email;
+    setProgress(100);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){
+    console.error(e);showSaving(false);
+    showToast('Error saving project. Please try again.');
+    document.getElementById('proceed-btn').disabled=false;
+  }
 }
-
-// ── GENERATE PACKAGE ──
-function generatePackage(){
-  if(!currentProject){toast('No project selected','error');return}
-  const p=currentProject;
-  const transcript=(p.transcript||[]).map(m=>'['+( m.role==='user'?'CUSTOMER':'AI')+']: '+m.content).join('\n\n');
-  const deliverables=(p.deliverables||[]).map(d=>'- '+d).join('\n');
-
-  const brief=`# AIAI Build Package
-Generated: ${new Date().toLocaleString()}
-Ref: ${p.ref_code||'N/A'}
-
----
-
-## INSTRUCTIONS FOR CLAUDE CODE
-
-FIRST — before writing any code, do this exactly:
-1. Create a folder named ${p.ref_code||'aiai-project'} in the current directory
-2. All files go inside that folder
-3. Save the completed app as ${p.ref_code||'aiai-project'}/index.html
-
-This is critical — every project must have its own folder so nothing ever gets overwritten.
-
-Then build a single self-contained HTML file based on this customer brief. Requirements:
-- Single index.html file only — no separate CSS or JS files
-- Vanilla JavaScript + Tailwind CSS via CDN (https://cdn.tailwindcss.com)
-- All data stored in localStorage for persistence
-- Fully functional, no placeholder content
-- Professional, clean, mobile-responsive design
-- Must work by simply opening the HTML file in a browser
-
-FINALLY — after the file is built and working, do these steps in order:
-
-STEP A — Deploy to GitHub:
-1. Run: git add ${p.ref_code||'aiai-project'}/
-2. Run: git commit -m "Add ${p.ref_code||'aiai-project'}: ${p.project_name||'customer app'}"
-3. Run: git push origin main
-4. Confirm the push succeeded
-
-STEP B — Update Supabase dashboard automatically:
-The live URL for this project is: https://cbasham75.github.io/aiai-demos/${p.ref_code||'aiai-project'}/
-Run this curl command to update the project record (refer to CLAUDE.md for credentials):
-curl -X PATCH "https://qunchnutxjbaxesajszm.supabase.co/rest/v1/projects?ref_code=eq.${p.ref_code||'aiai-project'}"   -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM"   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1bmNobnV0eGpiYXhlc2Fqc3ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NjQ5MTYsImV4cCI6MjA5MjA0MDkxNn0.GgZQ9qFTeOLjSRs8KxSt_MW4Q4FO3DJEyHUpDnl32lM"   -H "Content-Type: application/json"   -d "{\"demo_url\":\"https://cbasham75.github.io/aiai-demos/${p.ref_code||'aiai-project'}/\",\"status\":\"demo_sent\"}"
-
-STEP C — Report back:
-Tell me the live URL and confirm the Supabase update succeeded.
-
----
-
-## CUSTOMER INFO
-
-- **Name:** ${p.customer_name||'—'}
-- **Email:** ${p.customer_email||'—'}
-- **Phone:** ${p.customer_phone||'Not provided'}
-- **Ref code:** ${p.ref_code||'—'}
-- **Submitted:** ${new Date(p.created_at).toLocaleDateString()}
-
----
-
-## PROJECT SUMMARY
-
-**Project name:** ${p.project_name||'—'}
-**Complexity:** ${p.complexity||'—'}
-**Timeline:** ${p.timeline||'—'}
-
-${p.summary||'No summary provided.'}
-
----
-
-## DELIVERABLES
-
-${deliverables||'- See consultation transcript'}
-
----
-
-## CONSULTATION TRANSCRIPT
-
-This is the full conversation with the customer. Use it to understand exactly what they need:
-
-${transcript||'No transcript available.'}
-
----
-
-## INTERNAL NOTES
-
-${p.internal_notes||'No internal notes.'}
-
----
-
-## TECHNICAL REQUIREMENTS
-
-- Single HTML file, self-contained
-- Tailwind CSS via CDN for styling
-- localStorage for data persistence
-- No external API calls
-- Mobile responsive
-- Professional business aesthetic
-- Dark/light mode not required — pick one clean theme
-- All features fully implemented, no placeholders
-
-## STYLE GUIDE
-
-- Clean, professional business tool aesthetic
-- Consistent color scheme throughout
-- Clear typography hierarchy
-- Intuitive UX — no instructions needed to use it
-- Empty states handled gracefully
-- Success/error feedback on all actions
-
----
-*Generated by Ainkle Admin*
-*Customer ref: ${p.ref_code||'N/A'}*`;
-
-  // Download as markdown file
-  const blob=new Blob([brief],{type:'text/markdown'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download=`aiai-brief-${p.ref_code||'project'}.md`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  toast('Build package downloaded — drop it into Claude Code','success');
-}
-
-// ── INIT ──
-checkAuth();
 </script>
 </body>
 </html>
