@@ -656,12 +656,24 @@ function renderTab(tab){
   if(tab==='demo'){
     body.innerHTML=`
       <div class="detail-section">
-        <h4>Demo link</h4>
-        <div class="demo-input-row">
-          <input class="demo-input" id="demo-url-input" placeholder="https://demos.aiai.app/xyz" value="${p.demo_url||''}"/>
-          <button class="btn btn-primary btn-sm" onclick="saveDemoUrl()">Save</button>
+        <h4>Demo approval link</h4>
+        <div style="font-family:var(--mono);font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;word-break:break-all;color:var(--accent);margin-bottom:10px">
+          https://cbasham75.github.io/aiai-admin/approval.html?ref=${p.ref_code}
         </div>
-        ${p.demo_url?`<div style="font-size:13px;color:var(--muted)">Current: <a href="${p.demo_url}" target="_blank" style="color:var(--blue)">${p.demo_url}</a></div>`:''}
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-primary btn-sm" onclick="sendDemoEmail()">&#x1F4E4; Send to customer</button>
+          <button class="btn btn-sm" onclick="navigator.clipboard.writeText('https://cbasham75.github.io/aiai-admin/approval.html?ref='+currentProject.ref_code);toast('Copied!','success')">Copy</button>
+        </div>
+        <details>
+          <summary style="font-size:11px;color:var(--muted);cursor:pointer;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase">&#x25B6; Advanced — Raw demo URL</summary>
+          <div style="margin-top:10px">
+            <div class="demo-input-row">
+              <input class="demo-input" id="demo-url-input" placeholder="https://cbasham75.github.io/aiai-demos/ANK-XXXX/" value="${p.demo_url||''}"/>
+              <button class="btn btn-primary btn-sm" onclick="saveDemoUrl()">Save</button>
+            </div>
+            ${p.demo_url?`<div style="font-size:12px;color:var(--muted);margin-top:6px">Current: <a href="${p.demo_url}" target="_blank" style="color:var(--blue)">${p.demo_url}</a></div>`:''}
+          </div>
+        </details>
       </div>
       <div class="detail-section">
         <h4>Demo stats</h4>
