@@ -476,10 +476,10 @@ const CLOUDFLARE_WORKER='https://aiai-proxy.aiai-admin.workers.dev/';
 // ── CLOUDFLARE ANALYTICS ──
 const CF_ZONE_ID='42e428c8aa915dad58ab58594fc1d2b6';
 
-// ── DOMAIN CONFIG ──
-const ADMIN_URL='https://admin.ainkle.com';
-const DEMOS_URL='https://cbasham75.github.io/aiai-demos';
-const SITE_URL='https://ainkle.com';
+// ── DOMAIN CONFIG — update these when ainkle.com DNS is fully live ──
+const ADMIN_URL='https://cbasham75.github.io/aiai-admin'; // → change to https://admin.ainkle.com
+const DEMOS_URL='https://cbasham75.github.io/aiai-demos'; // → change to https://demos.ainkle.com
+const SITE_URL='https://cbasham75.github.io/aiai-site';   // → change to https://ainkle.com
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let currentProject=null;
@@ -1214,27 +1214,34 @@ async function loadAnalytics(){
       return;
     }
 
-    const totals=data?.result?.totals||{};
-    const visits=totals.visits?.all||0;
-    const pageviews=totals.pageviews?.all||0;
-    const requests=totals.requests?.all||0;
-    const bandwidth=totals.bandwidth?.all||0;
+    // Parse GraphQL response
+    const groups=data?.data?.viewer?.zones?.[0]?.httpRequests1dGroups||[];
+    
+    if(data.errors){
+      if(statsEl)statsEl.innerHTML='<div class="stat-card"><div class="stat-label">API Error</div><div class="stat-val" style="font-size:14px;color:var(--red)">'+data.errors[0]?.message+'</div></div>';
+      return;
+    }
+
+    const visits=groups.reduce((s,g)=>s+(g.uniq?.uniques||0),0);
+    const pageviews=groups.reduce((s,g)=>s+(g.sum?.pageViews||0),0);
+    const requests=groups.reduce((s,g)=>s+(g.sum?.requests||0),0);
+    const bandwidth=groups.reduce((s,g)=>s+(g.sum?.bytes||0),0);
     const bw=bandwidth>1048576?(bandwidth/1048576).toFixed(1)+' MB':(bandwidth/1024).toFixed(0)+' KB';
+    const periodLabel=period==='1d'?'Last 24 hours':period==='7d'?'Last 7 days':'Last 30 days';
 
     if(statsEl)statsEl.innerHTML=`
-      <div class="stat-card"><div class="stat-label">Unique visitors</div><div class="stat-val blue">${visits.toLocaleString()}</div><div class="stat-sub">${period==='1d'?'Last 24 hours':period==='7d'?'Last 7 days':'Last 30 days'}</div></div>
+      <div class="stat-card"><div class="stat-label">Unique visitors</div><div class="stat-val blue">${visits.toLocaleString()}</div><div class="stat-sub">${periodLabel}</div></div>
       <div class="stat-card"><div class="stat-label">Page views</div><div class="stat-val">${pageviews.toLocaleString()}</div><div class="stat-sub">Total page loads</div></div>
       <div class="stat-card"><div class="stat-label">Total requests</div><div class="stat-val accent">${requests.toLocaleString()}</div><div class="stat-sub">All asset requests</div></div>
       <div class="stat-card"><div class="stat-label">Bandwidth served</div><div class="stat-val green">${bw}</div><div class="stat-sub">Data transferred</div></div>`;
 
-    // Build simple bar chart from timeseries
-    const timeseries=data?.result?.timeseries||[];
-    if(timeseries.length&&chartEl){
-      const maxV=Math.max(...timeseries.map(t=>t.visits?.all||0),1);
-      const bars=timeseries.map(t=>{
-        const v=t.visits?.all||0;
+    // Build bar chart from daily groups
+    if(groups.length&&chartEl){
+      const maxV=Math.max(...groups.map(g=>g.uniq?.uniques||0),1);
+      const bars=groups.map(g=>{
+        const v=g.uniq?.uniques||0;
         const h=Math.max(4,Math.round(v/maxV*120));
-        const date=new Date(t.dimensions?.date||t.dimensions?.timestamp||'').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        const date=new Date(g.dimensions?.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
         return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0">
           <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${v}</div>
           <div style="width:100%;max-width:32px;height:${h}px;background:var(--accent);border-radius:4px 4px 0 0;opacity:.8"></div>
@@ -1243,7 +1250,7 @@ async function loadAnalytics(){
       }).join('');
       chartEl.innerHTML=`<div style="display:flex;align-items:flex-end;gap:4px;width:100%;height:160px;padding:0 8px">${bars}</div>`;
     } else if(chartEl){
-      chartEl.innerHTML='<div style="color:var(--muted);font-size:14px">No timeseries data available for this period</div>';
+      chartEl.innerHTML='<div style="color:var(--muted);font-size:14px">No data available for this period — check back after some traffic comes in</div>';
     }
 
   }catch(e){
